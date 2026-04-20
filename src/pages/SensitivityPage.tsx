@@ -1,6 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
-import { loadMarkets } from '../utils/storage';
-import { rankMarkets } from '../utils/scoring';
+import { useState, useMemo } from 'react';
+import { useMarketStore } from '../store/marketStore';
 import type { ScoredMarket, Pillar } from '../types/index';
 import { PILLARS } from '../data/metrics';
 
@@ -9,9 +8,20 @@ const DEFAULT_WEIGHTS = PILLARS.map(p => p.totalWeight); // [20,20,20,15,15,10]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function reScore(market: ScoredMarket, weights: number[]): number {
-  const raw = PILLARS.reduce((sum, p, i) => {
-    const avg = market.pillarScores[p.name as Pillar]?.score ?? 0;
-    return sum + (avg / 5) * weights[i];
+  // Only include pillars that have scored metrics; redistribute weight from empty ones
+  const active = PILLARS.map((p, i) => ({
+    pillar: p,
+    idx: i,
+    ps: market.pillarScores[p.name as Pillar],
+  })).filter(a => (a.ps?.scoredCount ?? 0) > 0);
+
+  const activeWeightSum = active.reduce((s, a) => s + weights[a.idx], 0);
+  if (activeWeightSum === 0) return 0;
+
+  const raw = active.reduce((sum, a) => {
+    const avg = a.ps?.score ?? 0;
+    const adjustedWeight = (weights[a.idx] / activeWeightSum) * 100;
+    return sum + (avg / 5) * adjustedWeight;
   }, 0);
   return Math.round(raw * 10) / 10;
 }
@@ -129,12 +139,12 @@ function PillarBar({ market, weights }: { market: ScoredMarket; weights: number[
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function SensitivityPage() {
-  const [baseRanked, setBaseRanked] = useState<ScoredMarket[]>([]);
-  const [weights, setWeights] = useState<number[]>(DEFAULT_WEIGHTS);
+  const markets = useMarketStore(s => s.markets);
+  const getScoredMarkets = useMarketStore(s => s.getScoredMarkets);
+  const _tick = useMarketStore(s => s._lastTick);
 
-  useEffect(() => {
-    setBaseRanked(rankMarkets(loadMarkets()));
-  }, []);
+  const baseRanked = useMemo(() => getScoredMarkets(), [markets, _tick]);
+  const [weights, setWeights] = useState<number[]>(DEFAULT_WEIGHTS);
 
   const sensitiveRanked = useMemo(() => {
     const scored = baseRanked.map(m => ({

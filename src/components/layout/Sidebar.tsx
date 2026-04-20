@@ -2,6 +2,8 @@ import { NavLink } from 'react-router-dom';
 
 const NAV = [
   { to: '/', label: 'Rankings', icon: '🏆' },
+  { to: '/data-entry', label: 'Data Entry', icon: '📝' },
+  { to: '/sources', label: 'Data Sources', icon: '🔗' },
   { to: '/map', label: 'Map', icon: '🗺️' },
   { to: '/sensitivity', label: 'Sensitivity', icon: '🎚️' },
   { to: '/add', label: 'Add Market', icon: '➕' },

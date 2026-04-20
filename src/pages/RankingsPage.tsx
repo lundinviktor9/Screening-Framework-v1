@@ -1,41 +1,39 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { loadMarkets, deleteMarket, resetToDefaults, saveMarkets } from '../utils/storage';
-import { rankMarkets } from '../utils/scoring';
+import { useMarketStore } from '../store/marketStore';
 import { exportToCSV, parseImportedCSV } from '../utils/csvImportExport';
-import type { ScoredMarket } from '../types';
 import RankingsTable from '../components/rankings/RankingsTable';
 
 export default function RankingsPage() {
-  const [ranked, setRanked] = useState<ScoredMarket[]>([]);
+  const markets = useMarketStore(s => s.markets);
+  const getScoredMarkets = useMarketStore(s => s.getScoredMarkets);
+  const deleteMarketAction = useMarketStore(s => s.deleteMarket);
+  const resetToDefaultsAction = useMarketStore(s => s.resetToDefaults);
+  const saveAllAction = useMarketStore(s => s.saveAll);
+  const masterDataDate = useMarketStore(s => s.masterDataDate);
+  const _tick = useMarketStore(s => s._lastTick); // subscribe to changes
+
+  const ranked = useMemo(() => getScoredMarkets(), [markets, _tick]);
+
   const [region, setRegion] = useState('All regions');
   const [importMsg, setImportMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
-  function load() {
-    const markets = loadMarkets();
-    setRanked(rankMarkets(markets));
-  }
-
-  useEffect(() => { load(); }, []);
-
   function handleDelete(id: string) {
     if (confirm('Delete this market?')) {
-      deleteMarket(id);
-      load();
+      deleteMarketAction(id);
     }
   }
 
   function handleReset() {
-    if (confirm('Reset all markets to the default 77 UK pre-filled dataset? Any manual edits will be lost.')) {
-      resetToDefaults();
-      load();
+    if (confirm('Reset all markets to the default 76 UK pre-filled dataset? Any manual edits will be lost.')) {
+      resetToDefaultsAction();
     }
   }
 
   function handleExport() {
-    exportToCSV(loadMarkets());
+    exportToCSV(markets);
   }
 
   function handleImportClick() {
@@ -48,9 +46,8 @@ export default function RankingsPage() {
     const reader = new FileReader();
     reader.onload = (ev) => {
       const text = ev.target?.result as string;
-      const result = parseImportedCSV(text, loadMarkets());
-      saveMarkets(result.updatedMarkets);
-      load();
+      const result = parseImportedCSV(text, markets);
+      saveAllAction(result.updatedMarkets);
       const msg = `Updated ${result.valuesUpdated} values across ${result.marketsUpdated} markets.` +
         (result.warnings.length > 0 ? ` ${result.warnings.length} warning(s) — check console.` : '');
       setImportMsg({ text: msg, ok: result.warnings.length === 0 });
@@ -58,7 +55,6 @@ export default function RankingsPage() {
       setTimeout(() => setImportMsg(null), 6000);
     };
     reader.readAsText(file);
-    // Reset input so the same file can be re-imported if needed
     e.target.value = '';
   }
 
@@ -80,7 +76,12 @@ export default function RankingsPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Market Rankings</h1>
           <p className="text-gray-500 text-sm mt-1">
-            {ranked.length} markets · 6 pillars · 60 metrics · ~23 metrics pre-filled from public data
+            {ranked.length} markets · 6 pillars · 60 metrics
+            {masterDataDate && (
+              <span className="ml-2 inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
+                Data updated: {masterDataDate}
+              </span>
+            )}
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">

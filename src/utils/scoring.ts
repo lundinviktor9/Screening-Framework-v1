@@ -58,16 +58,25 @@ export function scoreMarket(market: MarketInput): Omit<ScoredMarket, 'rank'> {
     pillarScores[pillarDef.name] = {
       pillar: pillarDef.name,
       score: avg,
+      scoredCount: scored.length,
+      totalCount: pillarMetrics.length,
       metricScores,
     };
   }
 
-  // Total score: Σ (pillarAvg × pillarWeight)
-  const totalScore = PILLARS.reduce((sum, p) => {
-    const avg = pillarScores[p.name]?.score ?? 0;
-    // avg is on 1–5 scale; weight is in points; convert: (avg/5) * totalWeight
-    return sum + (avg / 5) * p.totalWeight;
-  }, 0);
+  // Total score: Σ (pillarAvg × pillarWeight), excluding pillars with no data.
+  // Weight from empty pillars is redistributed proportionally to pillars that have data.
+  const activePillars = PILLARS.filter(p => (pillarScores[p.name]?.scoredCount ?? 0) > 0);
+  const activeWeightSum = activePillars.reduce((s, p) => s + p.totalWeight, 0);
+
+  const totalScore = activeWeightSum > 0
+    ? activePillars.reduce((sum, p) => {
+        const avg = pillarScores[p.name]?.score ?? 0;
+        // Redistribute: scale each pillar's weight so active weights sum to 100
+        const adjustedWeight = (p.totalWeight / activeWeightSum) * 100;
+        return sum + (avg / 5) * adjustedWeight;
+      }, 0)
+    : 0;
 
   return {
     market,

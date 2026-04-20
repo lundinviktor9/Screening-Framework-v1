@@ -10,6 +10,10 @@ export type RuleType = 'Higher' | 'Lower' | 'Direct';
 
 export type RAG = 'Green' | 'Amber' | 'Red';
 
+export type GeographicLevel = 'market' | 'regional';
+export type Confidence = 'primary_source' | 'estimated' | 'regional_proxy';
+export type MetricStatusFlag = 'VERIFIED' | 'ESTIMATED' | 'REGIONAL_PROXY' | 'REVIEW_NEEDED';
+
 export interface MetricDef {
   id: number;           // 1–60
   pillar: Pillar;
@@ -29,6 +33,11 @@ export interface MetricSource {
   sourceName: string;
   sourceUrl: string;
   dataDate: string;
+  geographicLevel?: GeographicLevel;
+  confidence?: Confidence;
+  status?: MetricStatusFlag;
+  justificationNote?: string;
+  regionalSourceMarketId?: string; // ID of market where regional value was entered
 }
 
 export interface MarketInput {
@@ -48,6 +57,8 @@ export interface MarketInput {
 export interface PillarScore {
   pillar: Pillar;
   score: number;        // avg of metric scores in pillar (1–5 scale)
+  scoredCount: number;  // how many metrics had data
+  totalCount: number;   // total metrics in this pillar
   metricScores: Record<number, number>; // metricId → 1–5
 }
 

@@ -1,18 +1,16 @@
-import { useState, useEffect } from 'react';
-import { loadMarkets } from '../utils/storage';
-import { rankMarkets } from '../utils/scoring';
-import type { ScoredMarket } from '../types';
+import { useState, useMemo } from 'react';
+import { useMarketStore } from '../store/marketStore';
 import MarketMap from '../components/map/MarketMap';
 import MarketProfilePanel from '../components/map/MarketProfilePanel';
 
 export default function MapPage() {
-  const [ranked, setRanked] = useState<ScoredMarket[]>([]);
+  const markets = useMarketStore(s => s.markets);
+  const getScoredMarkets = useMarketStore(s => s.getScoredMarkets);
+  const _tick = useMarketStore(s => s._lastTick);
+
+  const ranked = useMemo(() => getScoredMarkets(), [markets, _tick]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [region, setRegion] = useState('All regions');
-
-  useEffect(() => {
-    setRanked(rankMarkets(loadMarkets()));
-  }, []);
 
   const regions = ['All regions', ...Array.from(new Set(ranked.map(m => m.market.region))).sort()];
   const filtered = region === 'All regions' ? ranked : ranked.filter(m => m.market.region === region);

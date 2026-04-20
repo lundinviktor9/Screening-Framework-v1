@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python scrapers/nomis_scraper.py)",
+      "Bash(npx webpack:*)",
+      "Bash(npm run:*)"
+    ]
+  }
+}

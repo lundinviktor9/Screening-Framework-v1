@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { loadMarkets, addMarket, updateMarket, generateId } from '../utils/storage';
+import { useMarketStore, generateId } from '../store/marketStore';
 import type { MarketInput } from '../types';
 import MarketForm from '../components/market/MarketForm';
 
@@ -7,13 +7,15 @@ export default function AddMarketPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id?: string }>();
 
-  const existing = id
-    ? loadMarkets().find(m => m.id === id)
-    : undefined;
+  const markets = useMarketStore(s => s.markets);
+  const addMarketAction = useMarketStore(s => s.addMarket);
+  const updateMarketAction = useMarketStore(s => s.updateMarket);
+
+  const existing = id ? markets.find(m => m.id === id) : undefined;
 
   function handleSave(data: Omit<MarketInput, 'id' | 'createdAt'> & { id?: string }) {
     if (existing) {
-      updateMarket({ ...existing, ...data, updatedAt: new Date().toISOString() });
+      updateMarketAction({ ...existing, ...data, updatedAt: new Date().toISOString() });
     } else {
       const market: MarketInput = {
         ...data,
@@ -21,7 +23,7 @@ export default function AddMarketPage() {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      addMarket(market);
+      addMarketAction(market);
     }
     navigate('/');
   }

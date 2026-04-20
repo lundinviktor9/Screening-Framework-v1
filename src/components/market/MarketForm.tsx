@@ -45,11 +45,17 @@ export default function MarketForm({ initial, onSave, onCancel }: Props) {
   // Live score preview
   const pillarPreviews = PILLARS.map(p => {
     const metrics = METRICS.filter(m => m.pillar === p.name);
-    const scores = metrics.map(m => scoreMetric(m.id, values[m.id]));
-    const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-    return { ...p, avg };
+    const scored = metrics
+      .filter(m => values[m.id] !== null && values[m.id] !== undefined)
+      .map(m => scoreMetric(m.id, values[m.id]));
+    const avg = scored.length > 0 ? scored.reduce((a, b) => a + b, 0) / scored.length : 0;
+    return { ...p, avg, scoredCount: scored.length, totalCount: metrics.length };
   });
-  const totalScore = pillarPreviews.reduce((sum, p) => sum + (p.avg / 5) * p.totalWeight, 0);
+  const activePillars = pillarPreviews.filter(p => p.scoredCount > 0);
+  const activeWeightSum = activePillars.reduce((s, p) => s + p.totalWeight, 0);
+  const totalScore = activeWeightSum > 0
+    ? activePillars.reduce((sum, p) => sum + (p.avg / 5) * (p.totalWeight / activeWeightSum) * 100, 0)
+    : 0;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

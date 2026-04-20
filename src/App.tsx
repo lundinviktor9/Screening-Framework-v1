@@ -5,6 +5,8 @@ import AddMarketPage from './pages/AddMarketPage';
 import DashboardPage from './pages/DashboardPage';
 import MapPage from './pages/MapPage';
 import SensitivityPage from './pages/SensitivityPage';
+import DataEntryPage from './pages/DataEntryPage';
+import DataSourcesPage from './pages/DataSourcesPage';
 
 export default function App() {
   return (
@@ -17,6 +19,8 @@ export default function App() {
           <Route path="/dashboard"     element={<DashboardPage />} />
           <Route path="/map"           element={<MapPage />} />
           <Route path="/sensitivity"   element={<SensitivityPage />} />
+          <Route path="/data-entry"    element={<DataEntryPage />} />
+          <Route path="/sources"       element={<DataSourcesPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

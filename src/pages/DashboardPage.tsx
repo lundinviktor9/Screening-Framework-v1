@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { loadMarkets } from '../utils/storage';
-import { rankMarkets } from '../utils/scoring';
+import { useMarketStore } from '../store/marketStore';
 import type { ScoredMarket } from '../types';
 import { PILLARS } from '../data/metrics';
 import MarketRadar from '../components/dashboard/MarketRadar';
@@ -14,21 +13,25 @@ const MAX_SELECT = 5;
 
 export default function DashboardPage() {
   const [searchParams] = useSearchParams();
-  const [allMarkets, setAllMarkets] = useState<ScoredMarket[]>([]);
+  const markets = useMarketStore(s => s.markets);
+  const getScoredMarkets = useMarketStore(s => s.getScoredMarkets);
+  const _tick = useMarketStore(s => s._lastTick);
+
+  const allMarkets = useMemo(() => getScoredMarkets(), [markets, _tick]);
   const [selected, setSelected] = useState<string[]>([]);
   const [tab, setTab] = useState<'radar' | 'bars' | 'heatmap'>('radar');
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    const ranked = rankMarkets(loadMarkets());
-    setAllMarkets(ranked);
-
+    if (initialized || allMarkets.length === 0) return;
     const preselect = searchParams.get('market');
     if (preselect) {
       setSelected([preselect]);
-    } else if (ranked.length > 0) {
-      setSelected(ranked.slice(0, Math.min(3, ranked.length)).map(m => m.market.id));
+    } else {
+      setSelected(allMarkets.slice(0, Math.min(3, allMarkets.length)).map(m => m.market.id));
     }
-  }, []);
+    setInitialized(true);
+  }, [allMarkets, initialized, searchParams]);
 
   function toggle(id: string) {
     setSelected(prev =>
