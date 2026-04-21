@@ -137,14 +137,25 @@ function PillarBar({ market, weights }: { market: ScoredMarket; weights: number[
   );
 }
 
+// ─── Preset scenarios ────────────────────────────────────────────────────────
+const PRESET_SCENARIOS: Record<string, number[]> = {
+  'Equal (default)':   [17, 17, 17, 17, 16, 16],  // all pillars equally weighted
+};
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function SensitivityPage() {
   const markets = useMarketStore(s => s.markets);
   const getScoredMarkets = useMarketStore(s => s.getScoredMarkets);
+  const scenarios = useMarketStore(s => s.scenarios);
+  const saveScenario = useMarketStore(s => s.saveScenario);
+  const deleteScenario = useMarketStore(s => s.deleteScenario);
   const _tick = useMarketStore(s => s._lastTick);
 
   const baseRanked = useMemo(() => getScoredMarkets(), [markets, _tick]);
   const [weights, setWeights] = useState<number[]>(DEFAULT_WEIGHTS);
+  const [activePreset, setActivePreset] = useState<string>('Equal (default)');
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [newScenarioName, setNewScenarioName] = useState('');
 
   const sensitiveRanked = useMemo(() => {
     const scored = baseRanked.map(m => ({
@@ -158,12 +169,37 @@ export default function SensitivityPage() {
   const isDefault = weights.every((w, i) => Math.abs(w - DEFAULT_WEIGHTS[i]) < 0.01);
   const moversCount = sensitiveRanked.filter(m => m.sensitiveRank !== m.rank).length;
 
+  // Top movers (biggest absolute rank change)
+  const topMovers = useMemo(() => {
+    return [...sensitiveRanked]
+      .map(m => ({ ...m, absChange: Math.abs(m.rank - m.sensitiveRank) }))
+      .filter(m => m.absChange > 0)
+      .sort((a, b) => b.absChange - a.absChange)
+      .slice(0, 5);
+  }, [sensitiveRanked]);
+
   function handleSliderChange(idx: number, val: number) {
     setWeights(prev => adjustWeights(prev, idx, val));
+    setActivePreset(''); // user-customised
   }
 
   function handleReset() {
     setWeights([...DEFAULT_WEIGHTS]);
+    setActivePreset('Equal (default)');
+  }
+
+  function loadPreset(name: string, presetWeights: number[]) {
+    setWeights([...presetWeights]);
+    setActivePreset(name);
+  }
+
+  function handleSaveScenario() {
+    const name = newScenarioName.trim();
+    if (!name) return;
+    saveScenario(name, weights);
+    setShowSaveDialog(false);
+    setNewScenarioName('');
+    setActivePreset(name);
   }
 
   return (
@@ -174,6 +210,7 @@ export default function SensitivityPage() {
           <h1 className="text-base font-bold text-gray-900 leading-tight">Sensitivity Analysis</h1>
           <p className="text-xs text-gray-400">
             Adjust pillar weights to see how rankings change · weights always sum to 100%
+            {activePreset && <span className="ml-2 text-purple-600 font-medium">Scenario: {activePreset}</span>}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -183,6 +220,14 @@ export default function SensitivityPage() {
             </span>
           )}
           <button
+            onClick={() => setShowSaveDialog(true)}
+            disabled={isDefault}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ background: '#3B1F6B' }}
+          >
+            Save as scenario
+          </button>
+          <button
             onClick={handleReset}
             disabled={isDefault}
             className="px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
@@ -191,6 +236,100 @@ export default function SensitivityPage() {
           </button>
         </div>
       </div>
+
+      {/* ── Scenarios bar ── */}
+      <div className="flex-shrink-0 bg-gray-50 border-b border-gray-100 px-6 py-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">Presets:</span>
+          {Object.entries(PRESET_SCENARIOS).map(([name, w]) => (
+            <button
+              key={name}
+              onClick={() => loadPreset(name, w)}
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
+                activePreset === name ? 'text-white border-transparent' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+              }`}
+              style={activePreset === name ? { background: '#3B1F6B' } : {}}
+            >
+              {name}
+            </button>
+          ))}
+          {scenarios.length > 0 && (
+            <>
+              <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide ml-3">Saved:</span>
+              {scenarios.map(s => (
+                <div key={s.name} className="flex items-center gap-0.5">
+                  <button
+                    onClick={() => loadPreset(s.name, s.weights)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
+                      activePreset === s.name ? 'text-white border-transparent' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                    }`}
+                    style={activePreset === s.name ? { background: '#7C3AED' } : {}}
+                  >
+                    {s.name}
+                  </button>
+                  <button
+                    onClick={() => { if (confirm(`Delete scenario "${s.name}"?`)) deleteScenario(s.name); }}
+                    className="text-xs text-gray-300 hover:text-red-500 px-1"
+                    title="Delete scenario"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+
+        {showSaveDialog && (
+          <div className="mt-3 flex items-center gap-2 bg-white border border-purple-200 rounded-lg p-2">
+            <input
+              autoFocus
+              type="text"
+              value={newScenarioName}
+              onChange={e => setNewScenarioName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleSaveScenario(); if (e.key === 'Escape') setShowSaveDialog(false); }}
+              placeholder="Scenario name (e.g. 'Q1 2026 strategy')"
+              className="flex-1 border-0 px-2 py-1 text-sm focus:outline-none"
+            />
+            <button
+              onClick={handleSaveScenario}
+              disabled={!newScenarioName.trim()}
+              className="px-3 py-1 rounded-lg text-xs font-semibold text-white disabled:opacity-40"
+              style={{ background: '#3B1F6B' }}
+            >
+              Save
+            </button>
+            <button
+              onClick={() => setShowSaveDialog(false)}
+              className="px-3 py-1 rounded-lg text-xs font-medium text-gray-500"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ── Top movers banner ── */}
+      {!isDefault && topMovers.length > 0 && (
+        <div className="flex-shrink-0 bg-purple-50 border-b border-purple-200 px-6 py-2.5">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-xs font-semibold text-purple-700 uppercase tracking-wide">Top movers:</span>
+            {topMovers.map(m => {
+              const change = m.rank - m.sensitiveRank;
+              const up = change > 0;
+              return (
+                <span key={m.market.id} className="inline-flex items-center gap-1.5 bg-white border border-purple-200 rounded-full px-2.5 py-1 text-xs">
+                  <span className="font-medium text-gray-800">{m.market.name}</span>
+                  <span className={`font-bold ${up ? 'text-green-600' : 'text-red-500'}`}>
+                    {up ? '▲' : '▼'}{Math.abs(change)}
+                  </span>
+                  <span className="text-gray-400 tabular-nums">#{m.rank} → #{m.sensitiveRank}</span>
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ── Sliders panel ── */}
       <div className="flex-shrink-0 bg-white border-b border-gray-100 px-6 py-4">

@@ -15,3 +15,59 @@ body {
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: #ede9f8; }
 ::-webkit-scrollbar-thumb { background: #b8a9d9; border-radius: 3px; }
+
+/* ── Leaflet permanent label styles (Newmark regional zones + micro-locations) ── */
+
+/* Regional zone centroid labels: no box, no arrow, drop-shadow text */
+.leaflet-tooltip.region-label-tooltip {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(30, 58, 138, 0.25);
+  border-radius: 6px;
+  padding: 4px 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.leaflet-tooltip.region-label-tooltip::before { display: none; }
+
+/* Micro-location dot labels: centered inside the circle, no chrome */
+.leaflet-tooltip.micro-location-label {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.leaflet-tooltip.micro-location-label::before { display: none; }
+
+/* Newmark micro-location pill (zoom-gated: only shown at zoom >= 8) */
+.mloc-pill-wrap { pointer-events: auto; }
+.mloc-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #ffffff;
+  border: 1.5px solid #1e3a8a;
+  border-radius: 10px;
+  padding: 1px 6px 1px 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: #1e3a8a;
+  white-space: nowrap;
+  line-height: 1.2;
+  /* centre the pill on the anchor point */
+  transform: translate(-50%, -50%);
+  font-variant-numeric: tabular-nums;
+}
+.mloc-pill-dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #1e3a8a;
+  flex-shrink: 0;
+}
+.mloc-pill-value { letter-spacing: 0.1px; }

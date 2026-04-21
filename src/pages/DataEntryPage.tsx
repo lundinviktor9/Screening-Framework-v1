@@ -36,16 +36,16 @@ export default function DataEntryPage() {
 
   // Data completeness for selected market
   const completeness = useMemo(() => {
-    if (!selectedMarket) return { filled: 0, total: 60 };
+    if (!selectedMarket) return { filled: 0, total: METRICS.length };
     let filled = 0;
-    for (let id = 1; id <= 60; id++) {
-      const val = selectedMarket.values[id];
+    for (const metric of METRICS) {
+      const val = selectedMarket.values[metric.id];
       if (val !== null && val !== undefined) {
-        const status = selectedMarket.sources[id]?.status;
+        const status = selectedMarket.sources[metric.id]?.status;
         if (!status || status !== 'REVIEW_NEEDED') filled++;
       }
     }
-    return { filled, total: 60 };
+    return { filled, total: METRICS.length };
   }, [selectedMarket]);
 
   // Filter metrics

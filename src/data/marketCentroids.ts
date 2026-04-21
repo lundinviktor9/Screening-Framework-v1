@@ -1,5 +1,5 @@
 /**
- * Geographic centroids for all 76 UK industrial market areas.
+ * Geographic centroids for all UK industrial market areas.
  * Format: [latitude, longitude]
  * Used for positioning markers on the map view.
  */
@@ -79,5 +79,4 @@ export const MARKET_CENTROIDS: Record<string, [number, number]> = {
   'uk-73': [55.9533, -3.1883],  // Edinburgh
   'uk-74': [57.1497, -2.0943],  // Aberdeen
   'uk-75': [56.4620, -2.9707],  // Dundee
-  'uk-76': [54.5973, -5.9301],  // Belfast
 };

@@ -25,7 +25,7 @@ export default function AddMarketPage() {
       };
       addMarketAction(market);
     }
-    navigate('/');
+    navigate('/rankings');
   }
 
   return (
@@ -42,7 +42,7 @@ export default function AddMarketPage() {
       <MarketForm
         initial={existing}
         onSave={handleSave}
-        onCancel={() => navigate('/')}
+        onCancel={() => navigate('/rankings')}
       />
     </div>
   );

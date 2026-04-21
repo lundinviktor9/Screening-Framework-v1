@@ -7,13 +7,20 @@ import MapPage from './pages/MapPage';
 import SensitivityPage from './pages/SensitivityPage';
 import DataEntryPage from './pages/DataEntryPage';
 import DataSourcesPage from './pages/DataSourcesPage';
+import ComparePage from './pages/ComparePage';
+import PipelinePage from './pages/PipelinePage';
+import MarketPrintPage from './pages/MarketPrintPage';
+import LandingPage from './pages/LandingPage';
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Standalone print route — no sidebar */}
+        <Route path="/market/:id/print" element={<MarketPrintPage />} />
         <Route element={<AppLayout />}>
-          <Route path="/"              element={<RankingsPage />} />
+          <Route path="/"              element={<LandingPage />} />
+          <Route path="/rankings"      element={<RankingsPage />} />
           <Route path="/add"           element={<AddMarketPage />} />
           <Route path="/edit/:id"      element={<AddMarketPage />} />
           <Route path="/dashboard"     element={<DashboardPage />} />
@@ -21,6 +28,8 @@ export default function App() {
           <Route path="/sensitivity"   element={<SensitivityPage />} />
           <Route path="/data-entry"    element={<DataEntryPage />} />
           <Route path="/sources"       element={<DataSourcesPage />} />
+          <Route path="/compare"       element={<ComparePage />} />
+          <Route path="/pipeline"      element={<PipelinePage />} />
         </Route>
       </Routes>
     </BrowserRouter>

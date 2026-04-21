@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { MetricDef, MetricSource, MetricStatusFlag, GeographicLevel, Confidence } from '../../types';
 import { scoreMetric } from '../../utils/scoring';
+import { validateMetricValue, deriveStatusForEntry } from '../../utils/validation';
+import { formatCompact } from '../../utils/formatting';
+import { METRIC_VALIDATION } from '../../config/metricValidation';
 import StatusBadge from './StatusBadge';
 
 function scoreColour(score: number) {
@@ -41,16 +44,26 @@ export default function MetricEntryRow({
   // Local editing state (only used when expanded)
   const [editValue, setEditValue] = useState<string>(value !== null && value !== undefined ? String(value) : '');
   const [editSource, setEditSource] = useState<MetricSource>(source ?? { ...EMPTY_SOURCE });
+  const [overrideValidation, setOverrideValidation] = useState(false);
+  const [overrideJustification, setOverrideJustification] = useState('');
 
   const score = scoreMetric(metric.id, value);
   const hasValue = value !== null && value !== undefined;
   const status = source?.status;
   const isRegionalProxy = status === 'REGIONAL_PROXY';
+  const isReviewNeeded = status === 'REVIEW_NEEDED';
+
+  // Live validation of the currently-typed value
+  const editNumVal = editValue === '' || isNaN(parseFloat(editValue)) ? null : parseFloat(editValue);
+  const validation = useMemo(() => validateMetricValue(metric.id, editNumVal), [metric.id, editNumVal]);
+  const rule = METRIC_VALIDATION[metric.id];
 
   function handleExpand() {
     // Reset local state to current values when expanding
     setEditValue(value !== null && value !== undefined ? String(value) : '');
     setEditSource(source ?? { ...EMPTY_SOURCE });
+    setOverrideValidation(false);
+    setOverrideJustification(source?.justificationNote ?? '');
     setExpanded(!expanded);
   }
 
@@ -58,25 +71,42 @@ export default function MetricEntryRow({
     const numVal = editValue === '' ? null : parseFloat(editValue);
     const finalValue = numVal !== null && isNaN(numVal) ? null : numVal;
 
+    // Block save if value is out of range and user hasn't overridden with a justification
+    const valResult = validateMetricValue(metric.id, finalValue);
+    if (!valResult.valid && !overrideValidation) {
+      alert(
+        `${valResult.message}\n\nClick "Override" to save anyway with a justification note, ` +
+        `or adjust the value.`,
+      );
+      return;
+    }
+    if (!valResult.valid && overrideValidation && overrideJustification.trim().length < 5) {
+      alert('Please enter a justification note (at least 5 characters) to override the validation warning.');
+      return;
+    }
+
     const geoLevel = editSource.geographicLevel || 'market';
+    const confidence = editSource.confidence || 'estimated';
 
     if (geoLevel === 'regional') {
       const count = regionMarketCount;
       if (!confirm(`This will apply the value to all ${count} markets in ${regionName}. Continue?`)) {
         return;
       }
-      const { status: _s, geographicLevel: _g, confidence: _c, regionalSourceMarketId: _r, ...baseSrc } = editSource;
+      const { status: _s, geographicLevel: _g, confidence: _c, regionalSourceMarketId: _r,
+              justificationNote: _jn, ...baseSrc } = editSource;
       onCascade(finalValue, baseSrc);
     } else {
-      // Derive status from confidence
-      let derivedStatus: MetricStatusFlag = 'ESTIMATED';
-      if (editSource.confidence === 'primary_source') derivedStatus = 'ESTIMATED';
-      if (editSource.confidence === 'estimated') derivedStatus = 'ESTIMATED';
+      // Derive status based on validation result
+      const derivedStatus: MetricStatusFlag = deriveStatusForEntry(
+        metric.id, finalValue, confidence, overrideValidation,
+      );
 
       onSave(finalValue, {
         ...editSource,
         status: derivedStatus,
         geographicLevel: 'market',
+        justificationNote: overrideValidation ? overrideJustification.trim() : undefined,
       });
     }
 
@@ -104,9 +134,9 @@ export default function MetricEntryRow({
         <StatusBadge status={status} compact />
 
         {/* Current value */}
-        <div className="text-sm font-mono w-24 text-right shrink-0">
+        <div className="text-sm font-mono w-40 text-right shrink-0">
           {hasValue ? (
-            <span className="text-gray-800">{value}</span>
+            <span className="text-gray-800">{formatCompact(value, metric.unit)}</span>
           ) : (
             <span className="text-gray-300">—</span>
           )}
@@ -149,8 +179,18 @@ export default function MetricEntryRow({
                   value={editValue}
                   onChange={e => setEditValue(e.target.value)}
                   placeholder="Enter value"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-400"
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none ${
+                    !validation.valid
+                      ? 'border-red-300 focus:border-red-500 bg-red-50'
+                      : 'border-gray-200 focus:border-purple-400'
+                  }`}
                 />
+              )}
+              {rule && (
+                <div className="text-[10px] text-gray-400 mt-0.5">
+                  Expected: {rule.min} to {rule.max} {rule.unit}
+                  {rule.hint && <span className="italic"> — {rule.hint}</span>}
+                </div>
               )}
             </div>
 
@@ -225,6 +265,58 @@ export default function MetricEntryRow({
           {editSource.geographicLevel === 'regional' && (
             <div className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-3 py-2 rounded-lg">
               This value will be applied to all <strong>{regionMarketCount}</strong> markets in <strong>{regionName}</strong> as a regional proxy.
+            </div>
+          )}
+
+          {/* Validation warning + Override */}
+          {!validation.valid && editNumVal !== null && (
+            <div className="text-xs bg-red-50 border border-red-200 px-3 py-2 rounded-lg space-y-2">
+              <div className="flex items-start gap-2">
+                <span className="text-red-500 font-bold">⚠</span>
+                <div className="flex-1">
+                  <div className="font-semibold text-red-700">Validation warning</div>
+                  <div className="text-red-600">{validation.message}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id={`override-${metric.id}`}
+                  checked={overrideValidation}
+                  onChange={e => setOverrideValidation(e.target.checked)}
+                  className="accent-red-600"
+                />
+                <label htmlFor={`override-${metric.id}`} className="text-xs text-red-700 font-medium cursor-pointer">
+                  Override — I confirm this value is correct despite being unusual
+                </label>
+              </div>
+              {overrideValidation && (
+                <div>
+                  <label className="block text-[10px] font-semibold text-red-700 uppercase mb-1">
+                    Justification (required, min 5 chars)
+                  </label>
+                  <input
+                    type="text"
+                    value={overrideJustification}
+                    onChange={e => setOverrideJustification(e.target.value)}
+                    placeholder="e.g. Verified by CoStar Q1 2026 — market has unusual supply dynamics"
+                    className="w-full border border-red-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-red-500 bg-white"
+                  />
+                </div>
+              )}
+              {!overrideValidation && (
+                <div className="text-[10px] text-red-500 italic">
+                  Without override, this value will be saved with status REVIEW_NEEDED and excluded from scoring until justified.
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Existing REVIEW_NEEDED note (if loaded with existing justification) */}
+          {isReviewNeeded && source?.justificationNote && !overrideValidation && (
+            <div className="text-xs bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg">
+              <span className="font-semibold text-gray-600">Previous override note:</span>{' '}
+              <span className="text-gray-700 italic">{source.justificationNote}</span>
             </div>
           )}
 

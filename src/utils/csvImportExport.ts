@@ -1,5 +1,6 @@
-import type { MarketInput } from '../types';
+import type { MarketInput, MetricSource } from '../types';
 import { METRICS } from '../data/metrics';
+import { validateMetricValue } from './validation';
 
 // Column headers: market_id, market_name, region, m1 … m60
 const FIXED_COLS = ['market_id', 'market_name', 'region'];
@@ -42,6 +43,10 @@ export interface ImportResult {
   valuesUpdated: number;
   marketsUpdated: number;
   warnings: string[];
+  /** Count of values that passed validation */
+  valuesVerified: number;
+  /** Count of values flagged REVIEW_NEEDED (outside validation bounds) */
+  valuesFlaggedReview: number;
 }
 
 /**
@@ -55,18 +60,28 @@ export interface ImportResult {
 export function parseImportedCSV(csvText: string, existingMarkets: MarketInput[]): ImportResult {
   const warnings: string[] = [];
   let valuesUpdated = 0;
+  let valuesVerified = 0;
+  let valuesFlaggedReview = 0;
   const updatedIds = new Set<string>();
 
   // Parse CSV rows
   const lines = csvText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').filter(l => l.trim());
   if (lines.length < 2) {
-    return { updatedMarkets: existingMarkets, valuesUpdated: 0, marketsUpdated: 0, warnings: ['CSV file appears to be empty.'] };
+    return {
+      updatedMarkets: existingMarkets, valuesUpdated: 0, marketsUpdated: 0,
+      valuesVerified: 0, valuesFlaggedReview: 0,
+      warnings: ['CSV file appears to be empty.'],
+    };
   }
 
   const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
   const idIdx = headers.indexOf('market_id');
   if (idIdx === -1) {
-    return { updatedMarkets: existingMarkets, valuesUpdated: 0, marketsUpdated: 0, warnings: ['CSV is missing a "market_id" column. Make sure you are using the exported template.'] };
+    return {
+      updatedMarkets: existingMarkets, valuesUpdated: 0, marketsUpdated: 0,
+      valuesVerified: 0, valuesFlaggedReview: 0,
+      warnings: ['CSV is missing a "market_id" column. Make sure you are using the exported template.'],
+    };
   }
 
   // Build a map of metric column name → metric id
@@ -79,10 +94,13 @@ export function parseImportedCSV(csvText: string, existingMarkets: MarketInput[]
   const markets: MarketInput[] = existingMarkets.map(m => ({
     ...m,
     values: { ...m.values },
+    sources: { ...m.sources },
   }));
 
   const marketById: Record<string, MarketInput> = {};
   for (const m of markets) marketById[m.id] = m;
+
+  const now = new Date().toISOString();
 
   for (let rowIdx = 1; rowIdx < lines.length; rowIdx++) {
     const cells = lines[rowIdx].split(',');
@@ -110,13 +128,35 @@ export function parseImportedCSV(csvText: string, existingMarkets: MarketInput[]
         continue;
       }
 
+      // Run validation — flag out-of-range values as REVIEW_NEEDED
+      const valResult = validateMetricValue(metricId, num);
+      const status = valResult.valid ? 'ESTIMATED' : 'REVIEW_NEEDED';
+      if (!valResult.valid) {
+        warnings.push(`Row ${rowIdx + 1} (${mkt.name}), ${col}: ${valResult.message} — flagged REVIEW_NEEDED.`);
+        valuesFlaggedReview++;
+      } else {
+        valuesVerified++;
+      }
+
+      const existingSource = mkt.sources[metricId];
+      const newSource: MetricSource = {
+        sourceName: existingSource?.sourceName || 'CSV import',
+        sourceUrl: existingSource?.sourceUrl || '',
+        dataDate: existingSource?.dataDate || now.slice(0, 10),
+        status,
+        geographicLevel: existingSource?.geographicLevel || 'market',
+        confidence: 'estimated',
+        justificationNote: valResult.valid ? existingSource?.justificationNote : undefined,
+      };
+
       mkt.values[metricId] = num;
+      mkt.sources[metricId] = newSource;
       valuesUpdated++;
       rowUpdated = true;
     }
 
     if (rowUpdated) {
-      mkt.updatedAt = new Date().toISOString();
+      mkt.updatedAt = now;
       updatedIds.add(id);
     }
   }
@@ -125,6 +165,8 @@ export function parseImportedCSV(csvText: string, existingMarkets: MarketInput[]
     updatedMarkets: markets,
     valuesUpdated,
     marketsUpdated: updatedIds.size,
+    valuesVerified,
+    valuesFlaggedReview,
     warnings,
   };
 }

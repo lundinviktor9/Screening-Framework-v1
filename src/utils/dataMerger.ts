@@ -13,6 +13,7 @@
  */
 
 import type { MarketInput, MetricSource, MetricStatusFlag, GeographicLevel } from '../types';
+import { METRICS } from '../data/metrics';
 
 // ─── Master data JSON shape ───────────────────────────────────────────────────
 
@@ -107,12 +108,12 @@ export interface CompletenessInfo {
 }
 
 export function computeCompleteness(market: MarketInput): CompletenessInfo {
-  const total = 60;
+  const total = METRICS.length;
   let filled = 0;
-  for (let id = 1; id <= 60; id++) {
-    const val = market.values[id];
+  for (const metric of METRICS) {
+    const val = market.values[metric.id];
     if (val !== null && val !== undefined) {
-      const status = market.sources[id]?.status;
+      const status = market.sources[metric.id]?.status;
       // REVIEW_NEEDED does not count as filled
       if (!status || status !== 'REVIEW_NEEDED') {
         filled++;

@@ -1,14 +1,18 @@
 # Brunswick Industrial Real Estate Screening Framework
 ## Claude Code Persistent Context — Updated April 2026
 
+> **Deal pipeline work:** For any work on the deal pipeline (incoming-deal ingestion, PDF extraction, Pipeline tab, deal profiling), read [DEAL_PIPELINE_INTEGRATION_PLAN.md](DEAL_PIPELINE_INTEGRATION_PLAN.md) first. That document defines the 7-task build order, data model, and UX.
+
 ---
 
 ## WHAT THIS PROJECT IS
 
 A market screening and ranking tool for UK industrial/logistics real 
-estate investment. Covers 76 markets across the UK, scored across 
-6 pillars and 60 metrics to produce a composite score out of 100. 
-Used by investment professionals to identify target acquisition markets.
+estate investment. Covers **75 markets** across the UK (Belfast removed 
+in v4), scored across **6 pillars and 72 metrics** (60 original + 
+4 VOA MLI supplementary M61-M64 + 8 Newmark M65-M72; M41/M42 redefined 
+to £psf in v5) to produce a composite score out of 100. Used by 
+investment professionals to identify target acquisition markets.
 
 This is a React + TypeScript + Recharts + Tailwind CSS application. 
 No backend. No database server. Runs entirely in the browser, reading 
@@ -37,17 +41,19 @@ No paid subscriptions, no cloud services, no backend server
 
 ---
 
-## THE SIX PILLARS AND THEIR WEIGHTS (DEFAULT)
+## THE SIX PILLARS AND THEIR WEIGHTS (DEFAULT — equally-weighted)
 
-Supply          20%
-Demand          20%
-Connectivity    20%
-Labour          15%
-Rents & Yields  15%
-Strategic/Risk  10%
+Supply          17%
+Demand          17%
+Connectivity    17%
+Labour          17%
+Rents & Yields  16%
+Strategic/Risk  16%
 
-Weights are adjustable via the Sensitivity page sliders. 
-Do not hardcode weights anywhere — always read from state.
+Default is **equal weighting** (approx 16.67% each, integer-rounded to
+17/17/17/17/16/16 so they sum to 100). Weights are adjustable via the 
+Sensitivity page sliders. Do not hardcode weights anywhere — always 
+read from state.
 
 ---
 
@@ -114,6 +120,20 @@ BUCKET 5 — Overpass API / OpenStreetMap (VERIFIED status)
 Sources: overpass-api.de (free, no auth)
 Metrics: Motorway junction distance, port distance, 
          rail freight terminal distance, airport proximity
+
+BUCKET 6 — Newmark Multi-let Winter Bulletin (ESTIMATED status)
+Source: scrapers/pdfs/Newmark-Multi-let-Winter-bulletin-2025.pdf
+Method: scrapers/newmark_scraper.py (pdfplumber text extraction
+         + spec-provided ground-truth; chart values flagged as
+         chart_approximation with accuracy_note)
+Metrics: M41, M42, M65-M72 (rents, yields, reversion, vacancy,
+         rental growth forecast, retention, pipeline months)
+
+BUCKET 7 — Live UK 10-year gilt yield (calculated)
+Source: scrapers/gilt_yield_fetcher.py (BoE → DMO → cached fallback)
+Cache: scrapers/config/gilt_yield_cache.json
+Used: newmark_yield_spread = newmark_equivalent_yield - gilt_yield
+Stale: values older than 7 days auto-flag the spread as REVIEW_NEEDED
 
 ---
 
@@ -240,11 +260,18 @@ Output goes to /scrapers/output/ as individual JSON files.
 data_merger.py combines all outputs into master_data.json.
 
 Build order:
-1. nomis_scraper.py          (labour metrics, all 76 markets)
+1. nomis_scraper.py               (labour metrics, all 75 markets)
 2. environment_agency_scraper.py  (flood risk scores)
-3. overpass_scraper.py       (connectivity/proximity metrics)
-4. pdf_scraper.py            (reusable broker PDF extraction)
-5. data_merger.py            (combines all outputs, applies validation)
+3. overpass_scraper.py            (connectivity/proximity metrics)
+4. voa_scraper.py                 (M61-M64 MLI stock/unit/concentration)
+5. newmark_scraper.py             (M41, M42, M65-M72 from Q3 2025 PDF)
+6. gilt_yield_fetcher.py          (live UK 10-yr gilt for spread calc)
+7. region_boundaries_scraper.py   (UK region polygons for map layer)
+8. lad_boundaries_scraper.py      (LAD choropleth — optional)
+9. poi_scraper.py                 (motorway network lines — optional)
+10. pdf_scraper.py                (reusable broker PDF extraction — future)
+11. data_merger.py                (combines all outputs, applies validation,
+                                   calculates newmark_yield_spread)
 
 ---
 
@@ -280,7 +307,7 @@ Stop after each step and confirm with the user before proceeding.
 - Map visualisation
 - Radar chart
 - Dashboard layout
-- The 76 market list and their regional classifications
+- The 75 market list and their regional classifications
 - Tier thresholds (80/60)
 - Do not hallucinate metric values under any circumstances
 

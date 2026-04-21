@@ -2,10 +2,40 @@ import { useMemo } from 'react';
 import { useMarketStore } from '../store/marketStore';
 import { METRICS, PILLARS } from '../data/metrics';
 import type { MetricSource } from '../types';
+import MethodologySection from '../components/sources/MethodologySection';
+import LiveGiltYieldCard from '../components/sources/LiveGiltYieldCard';
 
 /** Unique source key for deduplication */
 function sourceKey(s: MetricSource): string {
   return `${s.sourceName}||${s.sourceUrl}||${s.dataDate}`;
+}
+
+/**
+ * Detect whether a data source date is older than 12 months.
+ * Handles many formats that appear in scraper outputs:
+ *  - "2025" → treats as Jan 1 of that year
+ *  - "2024-01-01", "2024-01" → ISO fragments
+ *  - "Jan 2025-Dec 2025" → takes the end year
+ *  - "February 2026" → parses as month + year
+ *  - "2014 to 2024" → takes the end year
+ *  - "2026 to 2031" → future projection → not stale
+ */
+function isStaleDate(dataDate: string): boolean {
+  const yearFromString = (s: string): number | null => {
+    const m = s.match(/\b(19|20)\d{2}\b/g);
+    if (!m || m.length === 0) return null;
+    // If multiple years, take the latest (most recent)
+    return Math.max(...m.map(y => parseInt(y, 10)));
+  };
+  const year = yearFromString(dataDate);
+  if (year === null) return false;
+  const now = new Date();
+  // If data year is current or in the future, not stale
+  if (year >= now.getFullYear()) return false;
+  // Simple rule: any year >= 12 months ago is stale. For April 2026 app,
+  // data from 2024 or earlier counts as stale.
+  const yearsBack = now.getFullYear() - year;
+  return yearsBack >= 2;
 }
 
 interface SourceSummary {
@@ -126,13 +156,50 @@ export default function DataSourcesPage() {
         </p>
       </div>
 
+      {/* Newmark source block (attribution + accuracy note) */}
+      <div className="bg-white rounded-xl border border-purple-100 shadow-sm px-4 py-3 mb-6">
+        <div className="text-[10px] font-bold uppercase tracking-widest text-purple-600 mb-1">
+          Newmark Multi-let Winter Bulletin Q3 2025
+        </div>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <div className="text-sm font-bold text-gray-900">
+              Regional rents, yields, reversion, vacancy, growth forecast, pipeline
+            </div>
+            <div className="text-xs text-gray-500 mt-0.5">
+              Source date: 2025-11-01 · Metrics covered: M41, M42, M65, M66, M67, M68, M69, M70, M72
+            </div>
+            <div className="text-[11px] text-gray-600 mt-1.5">
+              Newmark data is used for internal screening purposes only in accordance with professional research use.
+              © Newmark Gerald Eve LLP 2025.
+            </div>
+            <div className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded mt-2 px-2 py-1 inline-block">
+              Values with <strong>~</strong> prefix (vacancy, reversion, pipeline) are chart-approximated from PDF
+              diagrams and carry ±2-5 pp. For precise underlying data contact
+              <a href="mailto:Steve.Sharman@nmrk.com" className="text-purple-700 underline ml-1">Steve.Sharman@nmrk.com</a>.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Methodology — how scores are built */}
+      <MethodologySection />
+
+      {/* Live data: UK 10-year gilt yield (below methodology per spec) */}
+      <div className="mb-6">
+        <div className="text-[10px] font-bold uppercase tracking-widest text-purple-600 mb-2">
+          Live data feed
+        </div>
+        <LiveGiltYieldCard />
+      </div>
+
       {/* Summary cards */}
       <div className="grid grid-cols-4 gap-3 mb-6">
         {[
-          { label: 'Metrics with data', value: `${globalStats.metricsWithData}/60`, sub: 'at least 1 market' },
+          { label: 'Metrics with data', value: `${globalStats.metricsWithData}/${METRICS.length}`, sub: 'at least 1 market' },
           { label: 'Unique sources', value: String(globalStats.uniqueSources), sub: 'across all markets' },
           { label: 'Markets', value: String(globalStats.totalMarkets), sub: 'in framework' },
-          { label: 'Scraper coverage', value: 'M22-25, M33, M35-36, M40, M58', sub: 'automated via API' },
+          { label: 'Scraper coverage', value: 'M22-25, M33, M35-36, M40, M58, M61-64', sub: 'automated via API + VOA' },
         ].map(c => (
           <div key={c.label} className="bg-white rounded-xl border border-purple-100 shadow-sm px-4 py-3">
             <div className="text-xs text-gray-400 font-medium">{c.label}</div>
@@ -209,8 +276,29 @@ export default function DataSourcesPage() {
                             <span className="text-xs text-gray-400 italic">No source — manual entry needed</span>
                           )}
                         </td>
-                        <td className="px-4 py-2.5 text-xs text-gray-500">
-                          {primary?.dataDate || '—'}
+                        <td className="px-4 py-2.5 text-xs">
+                          {primary?.dataDate ? (
+                            (() => {
+                              const stale = isStaleDate(primary.dataDate);
+                              return (
+                                <div className="flex flex-col gap-0.5">
+                                  <span className={stale ? 'text-amber-600 font-medium' : 'text-gray-500'}>
+                                    {primary.dataDate}
+                                  </span>
+                                  {stale && (
+                                    <span
+                                      className="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 w-fit"
+                                      title={`Data is older than 12 months — consider refreshing`}
+                                    >
+                                      ⚠ Stale
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })()
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          )}
                         </td>
                         <td className="px-4 py-2.5">
                           {primary ? (

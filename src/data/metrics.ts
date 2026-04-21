@@ -50,8 +50,9 @@ export const METRICS: MetricDef[] = [
   { id: 40, pillar: 'Labour', name: 'Logistics / manufacturing workforce share', unit: '% of employment', ruleType: 'Higher', weight: 1.5, t5: 20, t4: 15,   t3: 10,   t2: 7,    inputGuidance: 'Share of local employment in logistics/manufacturing. Higher is better.' },
 
   // ── RENTS & YIELDS (metrics 41–50, weight 1.5 each) ───────────────────────
-  { id: 41, pillar: 'Rents & Yields', name: 'Average market rent index',        unit: 'index (national=100)', ruleType: 'Higher', weight: 1.5, t5: 130, t4: 115, t3: 100, t2: 85,  inputGuidance: 'Average market rent indexed to national average. Higher is better.' },
-  { id: 42, pillar: 'Rents & Yields', name: 'Prime rent index',                 unit: 'index (national=100)', ruleType: 'Higher', weight: 1.5, t5: 130, t4: 115, t3: 100, t2: 85,  inputGuidance: 'Prime market rent indexed to national average. Higher is better.' },
+  // M41/M42 redefined v5: now direct £psf values sourced from Newmark Multi-let Winter Bulletin Q3 2025
+  { id: 41, pillar: 'Rents & Yields', name: 'All-grades ERV (Newmark)',         unit: '£psf', ruleType: 'Higher', weight: 1.5, t5: 15,  t4: 10,  t3: 8,   t2: 6,  inputGuidance: 'Regional all-grades ERV from Newmark Q3 2025. Higher is better.' },
+  { id: 42, pillar: 'Rents & Yields', name: 'Prime rent (Newmark)',             unit: '£psf', ruleType: 'Higher', weight: 1.5, t5: 20,  t4: 13,  t3: 10,  t2: 7,  inputGuidance: 'Named location prime rent (market) or regional prime rent (proxy). Higher is better.' },
   { id: 43, pillar: 'Rents & Yields', name: 'Average-to-prime rent ratio',      unit: '%',                    ruleType: 'Higher', weight: 1.5, t5: 80,  t4: 70,  t3: 60,  t2: 50,  inputGuidance: 'Average rent divided by prime rent. Higher is better.' },
   { id: 44, pillar: 'Rents & Yields', name: 'Historic rental growth (5yr CAGR)', unit: '% CAGR',              ruleType: 'Higher', weight: 1.5, t5: 6,   t4: 4.5, t3: 3,   t2: 1.5, inputGuidance: '5-year CAGR in market rents. Higher is better.' },
   { id: 45, pillar: 'Rents & Yields', name: 'Forecast rental growth (3yr CAGR)', unit: '% CAGR',              ruleType: 'Higher', weight: 1.5, t5: 4,   t4: 3,   t3: 2,   t2: 1,   inputGuidance: 'Forward 3-year CAGR in market rents. Higher is better.' },
@@ -72,15 +73,38 @@ export const METRICS: MetricDef[] = [
   { id: 58, pillar: 'Strategic / Risk', name: 'Climate / flood risk exposure',  unit: '% of stock in high-risk zones', ruleType: 'Lower', weight: 1.0, t5: 5, t4: 10, t3: 20, t2: 30, inputGuidance: 'Share of stock exposed to high climate/flood risk. Lower is better.' },
   { id: 59, pillar: 'Strategic / Risk', name: 'Digital infrastructure quality', unit: 'Mbps available',      ruleType: 'Higher', weight: 1.0, t5: 1000, t4: 500,  t3: 200, t2: 100, inputGuidance: 'Typical business-grade broadband speed. Higher is better.' },
   { id: 60, pillar: 'Strategic / Risk', name: 'EV / fleet electrification readiness', unit: '% of stock EV-ready', ruleType: 'Higher', weight: 1.0, t5: 50, t4: 35, t3: 20, t2: 10, inputGuidance: 'Share of stock with meaningful EV charging / power readiness. Higher is better.' },
+
+  // ── SUPPLY — VOA MLI (metrics 61–64, weight 1.0 each) ──────────────────────
+  // Derived from the VOA compiled rating list via scrapers/voa_scraper.py.
+  // See scrapers/config/voa_scat_filter.json for filter methodology.
+  // Scotland + NI have no VOA coverage (these metrics will be null there).
+  { id: 61, pillar: 'Supply', name: 'MLI stock (VOA)',                    unit: 'sqft',            ruleType: 'Higher', weight: 1.0, t5: 5000000, t4: 2500000, t3: 1500000, t2: 750000,  inputGuidance: 'Total gross internal area of multi-let light industrial stock (<464m² GIA). Higher = more investable stock depth.' },
+  { id: 62, pillar: 'Supply', name: 'MLI unit count (VOA)',               unit: 'units',           ruleType: 'Higher', weight: 1.0, t5: 5000,    t4: 2500,    t3: 1500,    t2: 750,     inputGuidance: 'Number of MLI hereditaments (SCat 096/408/994). Higher = deeper transaction pool.' },
+  { id: 63, pillar: 'Supply', name: 'MLI concentration (VOA)',            unit: '%',               ruleType: 'Higher', weight: 1.0, t5: 80,      t4: 75,      t3: 70,      t2: 60,      inputGuidance: 'Share of industrial units under 464m² GIA. Higher = MLI-dominated structure (favourable for small-unit investors).' },
+  { id: 64, pillar: 'Supply', name: 'MLI net new supply (VOA)',           unit: 'units (3yr)',     ruleType: 'Lower',  weight: 1.0, t5: 20,      t4: 50,      t3: 100,     t2: 250,     inputGuidance: 'Net change in MLI unit count between 2023 and 2026 VOA lists. Lower = tighter supply, more rent tension.' },
+
+  // ── NEWMARK (metrics 65–72) — Newmark Multi-let Winter Bulletin Q3 2025 ───
+  // Regional-level unless noted. String IDs (newmark_*) are mapped to these
+  // numeric IDs by scrapers/data_merger.py.
+  { id: 65, pillar: 'Rents & Yields',   name: 'Equivalent yield (Newmark)',         unit: '%',      ruleType: 'Higher', weight: 1.5, t5: 5.75, t4: 5.30, t3: 5.00, t2: 4.75, inputGuidance: 'Regional equivalent yield from Newmark Q3 2025. For a buyer, higher yield is better.' },
+  { id: 66, pillar: 'Rents & Yields',   name: 'Yield spread vs 10-yr gilt',         unit: '%',      ruleType: 'Higher', weight: 1.5, t5: 3.0,  t4: 2.0,  t3: 1.0,  t2: 0.0,  inputGuidance: 'Newmark equivalent yield minus live UK 10-year gilt yield (calculated in data_merger). Higher is better.' },
+  { id: 67, pillar: 'Rents & Yields',   name: 'Rental reversion (Newmark)',         unit: '%',      ruleType: 'Higher', weight: 1.5, t5: 20,   t4: 15,   t3: 10,   t2: 5,    inputGuidance: 'Regional rental reversion (chart-approximated). Higher = more upside in passing rents.' },
+  { id: 68, pillar: 'Rents & Yields',   name: 'Prime rent growth forecast',         unit: '% pa',   ruleType: 'Higher', weight: 1.5, t5: 4.0,  t4: 3.0,  t3: 2.0,  t2: 1.0,  inputGuidance: 'Newmark 2024-29 annual prime rent growth forecast (regional).' },
+  { id: 69, pillar: 'Supply',           name: 'MLI vacancy (Newmark)',              unit: '%',      ruleType: 'Lower',  weight: 2.0, t5: 6,    t4: 9,    t3: 12,   t2: 15,   inputGuidance: 'Regional MLI vacancy rate from Newmark (chart-approx). Lower is better.' },
+  { id: 70, pillar: 'Demand',           name: 'Occupier retention rate',            unit: '%',      ruleType: 'Higher', weight: 2.0, t5: 72,   t4: 65,   t3: 58,   t2: 50,   inputGuidance: 'UK multi-let retention after expiry (Newmark, national).' },
+  { id: 71, pillar: 'Demand',           name: 'MLI default rate',                   unit: '%',      ruleType: 'Lower',  weight: 2.0, t5: 0.5,  t4: 1.0,  t3: 1.5,  t2: 2.5,  inputGuidance: 'Newmark multi-let default rate (national). Lower is better.' },
+  { id: 72, pillar: 'Strategic / Risk', name: 'Development pipeline months supply', unit: 'months', ruleType: 'Lower',  weight: 1.0, t5: 1,    t4: 2,    t3: 3,    t2: 5,    inputGuidance: 'Months of supply from Newmark pipeline at current take-up rate. Lower = tighter supply.' },
 ];
 
+// Default pillar weights: equal across all six (≈ 16.67% each), sums to 100.
+// Integer approximation (17/17/17/17/16/16) so display is clean; scoring normalizes.
 export const PILLARS: Array<{ name: import('../types').Pillar; totalWeight: number; colour: string }> = [
-  { name: 'Supply',           totalWeight: 20, colour: '#7C3AED' },
-  { name: 'Demand',           totalWeight: 20, colour: '#4F46E5' },
-  { name: 'Connectivity',     totalWeight: 20, colour: '#0891B2' },
-  { name: 'Labour',           totalWeight: 15, colour: '#059669' },
-  { name: 'Rents & Yields',   totalWeight: 15, colour: '#D97706' },
-  { name: 'Strategic / Risk', totalWeight: 10, colour: '#DC2626' },
+  { name: 'Supply',           totalWeight: 17, colour: '#7C3AED' },
+  { name: 'Demand',           totalWeight: 17, colour: '#4F46E5' },
+  { name: 'Connectivity',     totalWeight: 17, colour: '#0891B2' },
+  { name: 'Labour',           totalWeight: 17, colour: '#059669' },
+  { name: 'Rents & Yields',   totalWeight: 16, colour: '#D97706' },
+  { name: 'Strategic / Risk', totalWeight: 16, colour: '#DC2626' },
 ];
 
 export const CONFIG = {

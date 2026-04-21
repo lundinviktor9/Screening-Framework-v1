@@ -40,6 +40,8 @@ export interface MetricSource {
   regionalSourceMarketId?: string; // ID of market where regional value was entered
 }
 
+export type PipelineStatus = 'untracked' | 'watchlist' | 'active' | 'passed' | 'invested';
+
 export interface MarketInput {
   id: string;            // uuid
   name: string;
@@ -50,6 +52,10 @@ export interface MarketInput {
   values: Record<number, number | null>;
   // metricId → source info
   sources: Record<number, MetricSource>;
+  // Investment pipeline tracking
+  pipelineStatus?: PipelineStatus;
+  internalNotes?: string;
+  pipelineUpdatedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
