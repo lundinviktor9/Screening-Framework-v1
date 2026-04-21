@@ -22,24 +22,36 @@ Usage:
 import json
 import sys
 from pathlib import Path
-from datetime import date
+from datetime import date, datetime
 
 # ─── Config ────────────────────────────────────────────────────────────────────
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 OUTPUT_DIR = SCRIPT_DIR / "output"
+CONFIG_DIR = SCRIPT_DIR / "config"
 PUBLIC_DATA_DIR = PROJECT_ROOT / "public" / "data"
 
 # Input files (all optional — merger skips missing files)
 INPUT_FILES = [
     OUTPUT_DIR / "nomis_data.json",
+    OUTPUT_DIR / "nomis_extended_data.json",
+    OUTPUT_DIR / "drivetime_data.json",
+    OUTPUT_DIR / "household_data.json",
     OUTPUT_DIR / "overpass_data.json",
     OUTPUT_DIR / "flood_risk_data.json",
     OUTPUT_DIR / "sepa_flood_data.json",
+    OUTPUT_DIR / "voa_data.json",
+    OUTPUT_DIR / "newmark_data.json",  # Newmark Q3 2025 PDF data (Section 1)
 ]
 
+# Live gilt yield cache (produced by gilt_yield_fetcher.py) — used to
+# calculate newmark_yield_spread = newmark_equivalent_yield - gilt_yield_pct
+GILT_CACHE_PATH = CONFIG_DIR / "gilt_yield_cache.json"
+GILT_STALE_DAYS = 7  # values older than this flag yield_spread as REVIEW_NEEDED
+
 # Metric ID string → numeric ID mapping (used by React app)
+# MLI metrics M61-M64 use string aliases emitted by voa_scraper.py
 METRIC_ID_MAP = {
     "M1": 1, "M2": 2, "M3": 3, "M4": 4, "M5": 5,
     "M6": 6, "M7": 7, "M8": 8, "M9": 9, "M10": 10,
@@ -53,6 +65,23 @@ METRIC_ID_MAP = {
     "M46": 46, "M47": 47, "M48": 48, "M49": 49, "M50": 50,
     "M51": 51, "M52": 52, "M53": 53, "M54": 54, "M55": 55,
     "M56": 56, "M57": 57, "M58": 58, "M59": 59, "M60": 60,
+    # VOA MLI metrics — map string aliases to numeric IDs 61-64
+    "voa_mli_stock_sqft": 61,
+    "voa_mli_unit_count": 62,
+    "voa_mli_concentration_pct": 63,
+    "voa_mli_new_supply": 64,
+    # Newmark Q3 2025 metrics — map string aliases to numeric IDs 41-42, 65-72
+    # (M41 = all-grades ERV, M42 = prime rent — redefined as £psf in v5)
+    "newmark_all_grades_erv": 41,
+    "newmark_prime_rent": 42,
+    "newmark_equivalent_yield": 65,
+    "newmark_yield_spread": 66,
+    "newmark_rental_reversion": 67,
+    "newmark_rental_growth_forecast": 68,
+    "newmark_vacancy": 69,
+    "newmark_retention_rate": 70,
+    "newmark_default_rate": 71,
+    "newmark_pipeline_months": 72,
 }
 
 # Validation bounds per metric (min, max)
@@ -68,6 +97,31 @@ VALIDATION_RULES: dict[str, dict] = {
     "M37": {"min": 50, "max": 95, "unit": "%"},
     "M40": {"min": 0, "max": 60, "unit": "%"},
     "M58": {"min": 1, "max": 5, "unit": "score"},
+    # Tier 1 extended metrics
+    "M15": {"min": -20, "max": 20, "unit": "% YoY"},
+    "M16": {"min": 0, "max": 200, "unit": "SMEs per 1,000 pop"},
+    "M38": {"min": 50, "max": 200, "unit": "index"},
+    "M39": {"min": 50, "max": 200, "unit": "index"},
+    "M21": {"min": 0, "max": 300, "unit": "minutes"},
+    "M31": {"min": 0, "max": 20_000_000, "unit": "people"},
+    "M32": {"min": 0, "max": 40_000_000, "unit": "people"},
+    "M34": {"min": -5, "max": 20, "unit": "% over 5 years"},
+    # VOA MLI bounds (validated against 70-market actual ranges)
+    "voa_mli_stock_sqft": {"min": 0, "max": 100_000_000, "unit": "sqft"},
+    "voa_mli_unit_count": {"min": 0, "max": 50_000, "unit": "units"},
+    "voa_mli_concentration_pct": {"min": 0, "max": 100, "unit": "%"},
+    "voa_mli_new_supply": {"min": -5000, "max": 10_000, "unit": "units"},
+    # Newmark bounds (mirror src/config/metricValidation.ts M41/M42 + M65-M72)
+    "newmark_all_grades_erv":         {"min": 3,   "max": 30,  "unit": "£psf"},
+    "newmark_prime_rent":             {"min": 4,   "max": 45,  "unit": "£psf"},
+    "newmark_equivalent_yield":       {"min": 3.5, "max": 8,   "unit": "%"},
+    "newmark_yield_spread":           {"min": -2,  "max": 6,   "unit": "%"},
+    "newmark_rental_reversion":       {"min": 0,   "max": 40,  "unit": "%"},
+    "newmark_rental_growth_forecast": {"min": -5,  "max": 10,  "unit": "% pa"},
+    "newmark_vacancy":                {"min": 0,   "max": 30,  "unit": "%"},
+    "newmark_retention_rate":         {"min": 30,  "max": 90,  "unit": "%"},
+    "newmark_default_rate":           {"min": 0,   "max": 10,  "unit": "%"},
+    "newmark_pipeline_months":        {"min": 0,   "max": 24,  "unit": "months"},
 }
 
 # Source priority (lower number = higher priority)
@@ -105,11 +159,70 @@ def load_scraper_output(path: Path) -> list[dict]:
     if not path.exists():
         print(f"  Skipping (not found): {path.name}")
         return []
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         data = json.load(f)
     records = data.get("records", [])
     print(f"  Loaded {len(records)} records from {path.name}")
     return records
+
+
+def load_gilt_yield() -> tuple[float | None, dict]:
+    """Return (yield_pct, cache_info_dict). Missing cache → (None, {})."""
+    if not GILT_CACHE_PATH.exists():
+        return None, {}
+    try:
+        with open(GILT_CACHE_PATH, encoding="utf-8") as f:
+            payload = json.load(f)
+        y = payload.get("yield_pct")
+        return (float(y) if y is not None else None), payload
+    except (OSError, json.JSONDecodeError, ValueError, TypeError) as e:
+        print(f"  [gilt cache] unreadable: {e}")
+        return None, {}
+
+
+def calculate_yield_spreads(records: list[dict]) -> tuple[list[dict], dict]:
+    """
+    For every newmark_equivalent_yield record, emit a matching
+    newmark_yield_spread record (yield - gilt). If gilt cache is stale
+    (>7 days) flag the spread records as REVIEW_NEEDED.
+    Returns (new_records, gilt_info).
+    """
+    gilt_yield, cache_info = load_gilt_yield()
+    extra: list[dict] = []
+    cache_age = cache_info.get("cache_age_days", None)
+    stale = (
+        gilt_yield is None
+        or (isinstance(cache_age, (int, float)) and cache_age > GILT_STALE_DAYS)
+    )
+
+    for r in records:
+        if r.get("metric_id") != "newmark_equivalent_yield":
+            continue
+        ey = r.get("value")
+        if ey is None or gilt_yield is None:
+            continue
+        spread = round(float(ey) - gilt_yield, 3)
+        new = {**r}
+        new["metric_id"] = "newmark_yield_spread"
+        new["value"] = spread
+        new["unit"] = "%"
+        new["raw_text"] = f"{ey:.2f}% equivalent yield - {gilt_yield:.2f}% UK 10-yr gilt ({cache_info.get('source', 'unknown')})"
+        if stale:
+            new["status"] = "REVIEW_NEEDED"
+            new["validation_note"] = (
+                f"gilt yield cache is stale ({cache_age} days) — rerun gilt_yield_fetcher.py"
+            )
+        extra.append(new)
+
+    gilt_summary = {
+        "yield_pct": gilt_yield,
+        "cache_age_days": cache_age,
+        "source": cache_info.get("source", ""),
+        "fetch_date": cache_info.get("fetch_date", ""),
+        "is_stale": stale,
+        "records_emitted": len(extra),
+    }
+    return extra, gilt_summary
 
 
 def merge_records(all_records: list[dict]) -> dict[str, dict]:
@@ -155,10 +268,31 @@ def main():
         print("\nNo records found. Run the scrapers first.")
         return 1
 
+    # v5: Belfast (uk-76) removed from matrix — drop any records from older
+    # scraper outputs that still reference it.
+    before = len(all_records)
+    all_records = [r for r in all_records if r.get("market_id") != "uk-76"]
+    dropped = before - len(all_records)
+    if dropped:
+        print(f"  Dropped {dropped} records for removed market uk-76 (Belfast)")
+
     # Filter out records with no value and MISSING status
     records_with_data = [r for r in all_records if r.get("value") is not None]
     print(f"\nTotal records loaded: {len(all_records)}")
     print(f"Records with values: {len(records_with_data)}")
+
+    # Calculate newmark_yield_spread from newmark_equivalent_yield + gilt cache
+    print("\nCalculating newmark_yield_spread (equivalent yield - UK 10-yr gilt)...")
+    yield_spread_records, gilt_info = calculate_yield_spreads(all_records)
+    if gilt_info["yield_pct"] is not None:
+        print(f"  Gilt yield: {gilt_info['yield_pct']:.3f}% from {gilt_info['source']} "
+              f"(fetched {gilt_info['fetch_date']}, {gilt_info['cache_age_days']}d ago)"
+              f"{' — STALE (>7d)' if gilt_info['is_stale'] else ''}")
+        print(f"  Spread records emitted: {gilt_info['records_emitted']}")
+        all_records.extend(yield_spread_records)
+    else:
+        print(f"  No gilt yield cache available — newmark_yield_spread omitted.")
+        print(f"  Run `python scrapers/gilt_yield_fetcher.py` to populate cache.")
 
     # Validate
     print("\nValidating records...")
@@ -252,12 +386,61 @@ def main():
         json.dump(master, f, indent=2)
     print(f"Master data: {master_path}")
 
+    # Copy gilt_yield_cache.json to public/data/ so the Data Sources page can fetch it
+    if GILT_CACHE_PATH.exists():
+        dest = PUBLIC_DATA_DIR / "gilt_yield_cache.json"
+        with open(GILT_CACHE_PATH, encoding="utf-8") as src_f:
+            dest.write_text(src_f.read(), encoding="utf-8")
+        print(f"Gilt cache:  {dest}")
+
+    # Per-metric coverage — how many markets have each metric populated
+    per_metric_coverage: dict[int, int] = {}
+    for m in master["markets"].values():
+        for mid in m["metrics"].keys():
+            per_metric_coverage[int(mid)] = per_metric_coverage.get(int(mid), 0) + 1
+
+    # Per-pillar coverage (rough mapping of metric-id ranges → pillars)
+    def pillar_for_id(mid: int) -> str:
+        if 1 <= mid <= 10 or mid in (61, 62, 63, 64, 69): return "Supply"
+        if 11 <= mid <= 20 or mid in (70, 71):           return "Demand"
+        if 21 <= mid <= 30:                              return "Connectivity"
+        if 31 <= mid <= 40:                              return "Labour"
+        if 41 <= mid <= 50 or mid in (65, 66, 67, 68):   return "Rents & Yields"
+        if 51 <= mid <= 60 or mid == 72:                 return "Strategic / Risk"
+        return "?"
+
+    pillar_counts: dict[str, list[int]] = {}
+    for mid, n in per_metric_coverage.items():
+        pillar_counts.setdefault(pillar_for_id(mid), []).append(mid)
+
     # Print summary
-    print(f"\n=== Summary ===")
-    print(f"  Metrics covered: {', '.join(summary['metrics_covered'])}")
-    print(f"  Markets with data: {summary['markets_with_data']}/76")
-    print(f"  Total metric values: {summary['total_metric_values']}")
-    print(f"  Review needed: {summary['review_needed']}")
+    total_markets = len(master["markets"])
+    print(f"\n{'='*60}")
+    print(f"=== COVERAGE REPORT ===")
+    print(f"{'='*60}")
+    print(f"  Metrics covered:      {len(summary['metrics_covered'])}")
+    print(f"  Markets with data:    {summary['markets_with_data']}/{total_markets}")
+    print(f"  Total metric values:  {summary['total_metric_values']}")
+    print(f"  Review needed:        {summary['review_needed']}")
+
+    print(f"\nBy pillar (metric-id -> #markets populated):")
+    for pillar in ["Supply", "Demand", "Connectivity", "Labour", "Rents & Yields", "Strategic / Risk"]:
+        ids = sorted(pillar_counts.get(pillar, []))
+        if not ids:
+            print(f"  {pillar:22s} (no data)")
+            continue
+        entries = [f"M{i}={per_metric_coverage[i]}" for i in ids]
+        print(f"  {pillar:22s} {', '.join(entries)}")
+
+    print(f"\nNewmark metrics specifically (Rents & Yields improvement):")
+    newmark_ids = [41, 42, 65, 66, 67, 68, 70, 71, 72]
+    for nid in newmark_ids:
+        cov = per_metric_coverage.get(nid, 0)
+        print(f"  M{nid:<3d} {'X' if cov > 0 else '-'} {cov}/{total_markets} markets")
+
+    if gilt_info.get("yield_pct") is not None:
+        print(f"\nGilt yield: {gilt_info['yield_pct']:.3f}%"
+              f" (source: {gilt_info['source']}, age: {gilt_info['cache_age_days']}d)")
 
     return 0
 
