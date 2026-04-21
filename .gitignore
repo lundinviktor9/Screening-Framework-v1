@@ -22,3 +22,25 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Deal pipeline (extractor + inbox)
+extractor/.env
+extractor/__pycache__/
+extractor/**/__pycache__/
+deals_inbox/*.pdf
+deals_inbox/*.PDF
+
+# VOA raw data — too large for git, regenerate via voa_scraper.py
+scrapers/data/voa/
+
+# Scraper caches (regeneratable)
+scrapers/config/gilt_yield_cache.json
+public/data/gilt_yield_cache.json
+
+# Debug outputs
+boe_debug.html
+*.lock
+
+# Python
+__pycache__/
+*.pyc
