@@ -14,6 +14,7 @@
 
 import type { MarketInput, MetricSource, MetricStatusFlag, GeographicLevel } from '../types';
 import { METRICS } from '../data/metrics';
+import { UK_MARKETS } from '../data/ukMarkets';
 
 // ─── Master data JSON shape ───────────────────────────────────────────────────
 
@@ -58,6 +59,9 @@ export function mergeMasterData(
   markets: MarketInput[],
   master: MasterData,
 ): MarketInput[] {
+  // Build a map of UK_MARKETS for coordinate restoration
+  const ukMarketsById = new Map(UK_MARKETS.map(m => [m.id, m]));
+
   return markets.map(market => {
     const masterEntry = master.markets[market.id];
     if (!masterEntry) return market;
@@ -95,7 +99,18 @@ export function mergeMasterData(
       }
     }
 
-    return { ...market, values, sources };
+    const merged = { ...market, values, sources };
+
+    // Safeguard: restore lat/lng from UK_MARKETS if missing (prevents NaN errors in map)
+    if (!merged.lat || !merged.lng) {
+      const ukMarket = ukMarketsById.get(market.id);
+      if (ukMarket) {
+        merged.lat = ukMarket.lat;
+        merged.lng = ukMarket.lng;
+      }
+    }
+
+    return merged;
   });
 }
 

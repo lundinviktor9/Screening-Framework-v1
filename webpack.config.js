@@ -1,5 +1,8 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const webpack = require('webpack');
+
+require('dotenv').config();
 
 module.exports = (env, argv) => ({
   entry: './src/main.tsx',
@@ -29,6 +32,9 @@ module.exports = (env, argv) => ({
     new HtmlWebpackPlugin({
       template: './index.html',
       filename: 'index.html',
+    }),
+    new webpack.DefinePlugin({
+      'process.env.MAPBOX_TOKEN': JSON.stringify(process.env.MAPBOX_TOKEN)
     }),
   ],
   devServer: {

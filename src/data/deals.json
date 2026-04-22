@@ -47,5 +47,39 @@
     },
     "created_at": "2026-04-22T07:50:08.880109Z",
     "updated_at": "2026-04-22T07:50:08.880109Z"
+  },
+  {
+    "deal_id": "494d2967236f713e",
+    "status": "extracted",
+    "pdf_hash": "494d2967236f713eff068beccec240d82f5b42afd8a3b0a7493f0167f2351025",
+    "source_filename": "temp_Manchester - Kayley_Industrial_Estate.pdf",
+    "extracted_fields": {
+      "Type": "IM",
+      "Project Name": "Kayley Industrial Estate",
+      "Country": "United Kingdom",
+      "Location": "Ashton-under-Lyne",
+      "Portfolio": "No",
+      "Address": "Richmond Street",
+      "Postal code": "OL7 0AU",
+      "Year Built": "1970s+",
+      "Number of Tenants": 24,
+      "Leasable area, sq ft": 364817,
+      "Base rent incl. index, CCY/sqft": 5,
+      "NOI, CCY": 1924537,
+      "WAULT, years": 5,
+      "Economic occupancy rate, %": "94%",
+      "Yield": 7.5,
+      "Deal value, CCY": 24000000,
+      "Comment": "Highly reversionary multi-let industrial estate with immediate income and asset management opportunities."
+    },
+    "market_ids": [
+      "uk-47"
+    ],
+    "market_match_confidence": 0.85,
+    "microlocation_fit_score": 50,
+    "microlocation_narrative": "Market matched but score data unavailable.",
+    "narrative_detail": {},
+    "created_at": "2026-04-22T14:09:52.523741Z",
+    "updated_at": "2026-04-22T14:09:52.523741Z"
   }
 ]

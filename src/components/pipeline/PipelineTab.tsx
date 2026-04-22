@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDealStore, type DealRecord } from '../../store/useDealStore';
 import { DealUploadPanel } from './DealUploadPanel';
-import { DealTable } from './DealTable';
+import { DealCardList } from './DealCardList';
 import { DealMap } from './DealMap';
 import { DealProfileDrawer } from './DealProfileDrawer';
 import './PipelineTab.css';
@@ -51,7 +51,7 @@ export function PipelineTab() {
               No deals yet. Upload PDFs to get started.
             </div>
           ) : (
-            <DealTable
+            <DealCardList
               deals={deals}
               selectedDeal={selectedDeal}
               onSelectDeal={setSelectedDeal}

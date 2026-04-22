@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Map, { Marker, Popup } from 'react-map-gl/mapbox';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { type DealRecord } from '../../store/useDealStore';
@@ -17,7 +17,20 @@ interface MapMarker {
 
 export function DealMap({ deals, selectedDeal }: DealMapProps) {
   const [popupDeal, setPopupDeal] = useState<DealRecord | null>(null);
+  const [latitude, setLatitude] = useState(54);
+  const [longitude, setLongitude] = useState(-2);
+  const [zoom, setZoom] = useState(5);
   const markets = useMarketStore(s => s.markets);
+
+  // Centre map on selected deal when it changes
+  useEffect(() => {
+    if (!selectedDeal?.market_ids.length) return;
+    const market = markets.find(m => m.id === selectedDeal.market_ids[0]);
+    if (!market) return;
+    setLatitude(market.lat);
+    setLongitude(market.lng);
+    setZoom(10);
+  }, [selectedDeal, markets]);
 
   // Get coordinates for deals
   const markers: MapMarker[] = deals
@@ -36,15 +49,7 @@ export function DealMap({ deals, selectedDeal }: DealMapProps) {
     })
     .filter((m): m is MapMarker => m !== null);
 
-  // Center on selected deal or UK average
-  const centerLat = selectedDeal?.market_ids.length
-    ? markets.find(m => m.id === selectedDeal.market_ids[0])?.lat ?? 54
-    : 54;
-  const centerLng = selectedDeal?.market_ids.length
-    ? markets.find(m => m.id === selectedDeal.market_ids[0])?.lng ?? -2
-    : -2;
-
-  const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
+  const MAPBOX_TOKEN = process.env.MAPBOX_TOKEN;
 
   if (!MAPBOX_TOKEN) {
     return (
@@ -60,10 +65,13 @@ export function DealMap({ deals, selectedDeal }: DealMapProps) {
   return (
     <Map
       mapboxAccessToken={MAPBOX_TOKEN}
-      initialViewState={{
-        latitude: centerLat,
-        longitude: centerLng,
-        zoom: 6
+      latitude={latitude}
+      longitude={longitude}
+      zoom={zoom}
+      onMove={e => {
+        setLatitude(e.viewState.latitude);
+        setLongitude(e.viewState.longitude);
+        setZoom(e.viewState.zoom);
       }}
       style={{ width: '100%', height: '100%' }}
       mapStyle="mapbox://styles/mapbox/light-v11"
@@ -72,7 +80,7 @@ export function DealMap({ deals, selectedDeal }: DealMapProps) {
         const isSelected = selectedDeal?.deal_id === marker.deal.deal_id;
         const fitScore = marker.deal.microlocation_fit_score;
         const color =
-          fitScore >= 70 ? '#16a34a' : fitScore >= 50 ? '#eab308' : '#dc2626';
+          fitScore >= 70 ? '#16a34a' : fitScore >= 40 ? '#eab308' : '#dc2626';
 
         return (
           <Marker

@@ -7,6 +7,44 @@ interface DealTableProps {
   onSelectDeal: (deal: DealRecord) => void;
 }
 
+// Format helpers
+function fmtCompactGbp(v: unknown): string {
+  const n = Number(v);
+  if (!v || isNaN(n)) return '—';
+  if (n >= 1_000_000) return `£${(n / 1_000_000).toFixed(2).replace(/\.?0+$/, '')}m`;
+  if (n >= 1_000)     return `£${(n / 1_000).toFixed(0)}k`;
+  return `£${n}`;
+}
+
+function fmtPsf(v: unknown): string {
+  const n = Number(v);
+  return !v || isNaN(n) ? '—' : `£${n.toFixed(2)}`;
+}
+
+function fmtYears(v: unknown): string {
+  const n = Number(v);
+  return !v || isNaN(n) ? '—' : `${n} yrs`;
+}
+
+function fmtStr(v: unknown): string {
+  return v === null || v === undefined || v === '' ? '—' : String(v);
+}
+
+function fmtInt(v: unknown): string {
+  const n = Number(v);
+  return !v || isNaN(n) ? '—' : String(Math.round(n));
+}
+
+function fmtPct(v: unknown): string {
+  const n = Number(v);
+  return !v || isNaN(n) ? '—' : `${n.toFixed(2)}%`;
+}
+
+function truncate60(v: unknown): string {
+  const s = v === null || v === undefined || v === '' ? '—' : String(v);
+  return s === '—' ? '—' : s.length > 60 ? s.slice(0, 60) + '...' : s;
+}
+
 export function DealTable({ deals, selectedDeal, onSelectDeal }: DealTableProps) {
   const deleteDeal = useDealStore(s => s.deleteDeal);
 
@@ -25,13 +63,20 @@ export function DealTable({ deals, selectedDeal, onSelectDeal }: DealTableProps)
       <table className="w-full text-sm">
         <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
           <tr>
-            <th className="px-4 py-3 text-left font-semibold text-gray-700">Asset</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-700">Markets</th>
-            <th className="px-4 py-3 text-right font-semibold text-gray-700">NIY</th>
-            <th className="px-4 py-3 text-right font-semibold text-gray-700">RY</th>
-            <th className="px-4 py-3 text-right font-semibold text-gray-700">Fit Score</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-700">Status</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-700">Actions</th>
+            <th className="px-3 py-3 text-left font-semibold text-gray-700 whitespace-nowrap">Asset</th>
+            <th className="px-3 py-3 text-left font-semibold text-gray-700 whitespace-nowrap">Markets</th>
+            <th className="px-3 py-3 text-left font-semibold text-gray-700 whitespace-nowrap">Age</th>
+            <th className="px-3 py-3 text-left font-semibold text-gray-700 whitespace-nowrap"># Tenants</th>
+            <th className="px-3 py-3 text-left font-semibold text-gray-700 whitespace-nowrap">Occupancy</th>
+            <th className="px-3 py-3 text-right font-semibold text-gray-700 whitespace-nowrap">Quoting Price</th>
+            <th className="px-3 py-3 text-right font-semibold text-gray-700 whitespace-nowrap">NIY</th>
+            <th className="px-3 py-3 text-right font-semibold text-gray-700 whitespace-nowrap">RY</th>
+            <th className="px-3 py-3 text-right font-semibold text-gray-700 whitespace-nowrap">Rent (£/sq ft)</th>
+            <th className="px-3 py-3 text-right font-semibold text-gray-700 whitespace-nowrap">WAULT</th>
+            <th className="px-3 py-3 text-right font-semibold text-gray-700 whitespace-nowrap">Fit Score</th>
+            <th className="px-3 py-3 text-left font-semibold text-gray-700 whitespace-nowrap">Status</th>
+            <th className="px-3 py-3 text-left font-semibold text-gray-700 whitespace-nowrap">Comment</th>
+            <th className="px-3 py-3 text-left font-semibold text-gray-700 whitespace-nowrap">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -43,18 +88,18 @@ export function DealTable({ deals, selectedDeal, onSelectDeal }: DealTableProps)
                 selectedDeal?.deal_id === deal.deal_id ? 'bg-blue-50' : 'hover:bg-gray-50'
               }`}
             >
-              {/* Asset name */}
-              <td className="px-4 py-3">
+              {/* 1. Asset */}
+              <td className="px-3 py-3">
                 <div className="font-medium text-gray-900">
                   {deal.extracted_fields?.['Project Name'] || deal.source_filename}
                 </div>
-                <div className="text-xs text-gray-500">
-                  {deal.extracted_fields?.Seller || 'Unknown seller'}
-                </div>
+                {deal.extracted_fields?.Seller && (
+                  <div className="text-xs text-gray-500">{deal.extracted_fields.Seller}</div>
+                )}
               </td>
 
-              {/* Markets */}
-              <td className="px-4 py-3">
+              {/* 2. Markets */}
+              <td className="px-3 py-3">
                 <div className="flex gap-1 flex-wrap">
                   {deal.market_ids.map(m => {
                     const market = UK_MARKETS.find(mkt => mkt.id === m);
@@ -68,35 +113,63 @@ export function DealTable({ deals, selectedDeal, onSelectDeal }: DealTableProps)
                 </div>
               </td>
 
-              {/* NIY */}
-              <td className="px-4 py-3 text-right text-gray-700">
-                {deal.extracted_fields?.Yield ? `${deal.extracted_fields.Yield.toFixed(2)}%` : '—'}
+              {/* 3. Age */}
+              <td className="px-3 py-3 text-gray-700">
+                {fmtStr(deal.extracted_fields?.['Year Built'])}
               </td>
 
-              {/* RY */}
-              <td className="px-4 py-3 text-right text-gray-700">
-                {deal.extracted_fields?.Yield2 ? `${deal.extracted_fields.Yield2.toFixed(2)}%` : '—'}
+              {/* 4. # Tenants */}
+              <td className="px-3 py-3 text-gray-700">
+                {fmtInt(deal.extracted_fields?.['Number of Tenants'])}
               </td>
 
-              {/* Fit score */}
-              <td className="px-4 py-3 text-right">
-                <div className="flex justify-end">
-                  <span
-                    className={`px-3 py-1 rounded-lg font-semibold text-sm ${
-                      deal.microlocation_fit_score >= 70
-                        ? 'bg-green-100 text-green-800'
-                        : deal.microlocation_fit_score >= 50
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-red-100 text-red-800'
-                    }`}
-                  >
-                    {deal.microlocation_fit_score.toFixed(0)}
-                  </span>
-                </div>
+              {/* 5. Occupancy */}
+              <td className="px-3 py-3 text-gray-700">
+                {fmtStr(deal.extracted_fields?.['Economic occupancy rate, %'])}
               </td>
 
-              {/* Status */}
-              <td className="px-4 py-3">
+              {/* 6. Quoting Price */}
+              <td className="px-3 py-3 text-right text-gray-700">
+                {fmtCompactGbp(deal.extracted_fields?.['Deal value, CCY'])}
+              </td>
+
+              {/* 7. NIY */}
+              <td className="px-3 py-3 text-right text-gray-700">
+                {fmtPct(deal.extracted_fields?.Yield)}
+              </td>
+
+              {/* 8. RY */}
+              <td className="px-3 py-3 text-right text-gray-700">
+                {fmtPct(deal.extracted_fields?.Yield2)}
+              </td>
+
+              {/* 9. Rent (£/sq ft) */}
+              <td className="px-3 py-3 text-right text-gray-700">
+                {fmtPsf(deal.extracted_fields?.['Base rent incl. index, CCY/sqft'])}
+              </td>
+
+              {/* 10. WAULT */}
+              <td className="px-3 py-3 text-right text-gray-700">
+                {fmtYears(deal.extracted_fields?.['WAULT, years'])}
+              </td>
+
+              {/* 11. Fit Score */}
+              <td className="px-3 py-3 text-right">
+                <span
+                  className={`inline-block px-3 py-1 rounded-lg font-semibold text-sm ${
+                    deal.microlocation_fit_score >= 70
+                      ? 'bg-green-100 text-green-800'
+                      : deal.microlocation_fit_score >= 40
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-red-100 text-red-800'
+                  }`}
+                >
+                  {deal.microlocation_fit_score.toFixed(0)}
+                </span>
+              </td>
+
+              {/* 12. Status */}
+              <td className="px-3 py-3">
                 <span
                   className={`text-xs font-medium px-2 py-1 rounded ${
                     deal.status === 'extracted'
@@ -110,8 +183,15 @@ export function DealTable({ deals, selectedDeal, onSelectDeal }: DealTableProps)
                 </span>
               </td>
 
-              {/* Actions */}
-              <td className="px-4 py-3">
+              {/* 13. Comment */}
+              <td className="px-3 py-3 text-gray-700 min-w-fit" title={String(deal.extracted_fields?.Comment || '')}>
+                <span className="inline-block max-w-sm truncate">
+                  {truncate60(deal.extracted_fields?.Comment)}
+                </span>
+              </td>
+
+              {/* 14. Actions */}
+              <td className="px-3 py-3">
                 <button
                   onClick={e => {
                     e.stopPropagation();
