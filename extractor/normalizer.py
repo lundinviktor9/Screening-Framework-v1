@@ -33,7 +33,6 @@ INBOUND_UK_NUMBER_FIELDS = [
     "Price, CCY/sqft",
 ]
 INBOUND_UK_YIELD_FIELDS = ["Yield", "Yield2"]
-INBOUND_UK_PROPERTY_TYPE_FIELDS = ["Use"]
 
 
 def normalize_inbound_uk_row(
@@ -51,13 +50,6 @@ def normalize_inbound_uk_row(
     """
     out = dict(row)
     meta: Dict[str, Any] = {}
-
-    # Property type fields
-    for field in INBOUND_UK_PROPERTY_TYPE_FIELDS:
-        if field in out and out[field]:
-            canon, conf = normalize_property_type(out[field], property_map)
-            meta[f"{field}_confidence"] = conf
-            out[field] = canon
 
     # Country field — UK pass-through, no normalization needed
     if "Country" in out and out["Country"]:

@@ -3,7 +3,7 @@
     "deal_id": "be133cc37e1816b9",
     "status": "extracted",
     "pdf_hash": "be133cc37e1816b9b81b067d7943515d735cc776b138c72a5ddc973da31d7f4f",
-    "source_filename": "West Craigs IE Brochure - FINAL.pdf",
+    "source_filename": "be133cc37e1816b9.pdf",
     "extracted_fields": {
       "Type": "IM",
       "Project Name": "West Craigs Industrial Estate",
@@ -14,25 +14,38 @@
       "Postal code": "EH12 0BD",
       "Year Built": "2001",
       "Number of Tenants": 18,
-      "Use": "Other",
       "Leasable area, sq ft": 67018,
-      "Base rent incl. index, CCY/sqft": 10,
       "NOI, CCY": 662109,
       "WAULT, years": 5,
       "Economic occupancy rate, %": "100%",
       "Yield": 7.0,
       "Deal value, CCY": 8870000,
       "Yield2": 8.14,
-      "Comment": "Reversionary multi-let industrial estate with 68% rental reversion accessible within 3 years."
+      "Comment": "Reversionary multi-let industrial estate with significant asset management opportunities and strong rental growth potential."
     },
     "market_ids": [
       "uk-73"
     ],
     "market_match_confidence": 1.0,
-    "microlocation_fit_score": 50,
-    "microlocation_narrative": "Market matched but score data unavailable.",
-    "narrative_detail": {},
-    "created_at": "2026-04-22T02:32:09.543169Z",
-    "updated_at": "2026-04-22T02:32:09.543169Z"
+    "microlocation_fit_score": 64.6,
+    "microlocation_narrative": "uk-73 ranks strongly on Connectivity (score 90) and Supply (score 75).",
+    "narrative_detail": {
+      "uk-73": {
+        "fit_score": 64.6,
+        "narrative": "uk-73 ranks strongly on Connectivity (score 90) and Supply (score 75).",
+        "top_pillars": [
+          [
+            "Connectivity",
+            90
+          ],
+          [
+            "Supply",
+            75
+          ]
+        ]
+      }
+    },
+    "created_at": "2026-04-22T07:50:08.880109Z",
+    "updated_at": "2026-04-22T07:50:08.880109Z"
   }
 ]

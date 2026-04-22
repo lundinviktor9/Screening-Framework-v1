@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "webpack serve --mode development",
     "build": "webpack --mode production",
+    "build:scores": "node scripts/build-scored-markets.js",
     "lint": "eslint .",
     "extractor": "python -m uvicorn extractor.server:app --host 0.0.0.0 --port 8787 --reload",
     "ingest-inbox": "curl -X POST http://localhost:8787/ingest-folder?folder_path=deals_inbox"

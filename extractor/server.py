@@ -65,6 +65,19 @@ MARKETS_CONFIG = REPO_ROOT / "scrapers" / "config" / "markets.json"
 POSTCODE_MAP = Path(__file__).parent / "postcode_area_to_market.json"
 STRATEGY_WEIGHTS = Path(__file__).parent / "strategy_weights.json"
 DEALS_JSON = REPO_ROOT / "src" / "data" / "deals.json"
+SCORED_MARKETS = REPO_ROOT / "public" / "data" / "scored_markets.json"
+
+# Load pre-computed market scores
+_scored_markets_by_id = {}
+if SCORED_MARKETS.exists():
+    with open(SCORED_MARKETS) as f:
+        scored = json.load(f)
+        _scored_markets_by_id = {m['id']: m for m in scored}
+
+def get_pillar_scores(market_id: str) -> Dict[str, float]:
+    """Retrieve pillar scores for a market from pre-computed file."""
+    market = _scored_markets_by_id.get(market_id)
+    return market['pillarScores'] if market else {}
 
 matcher = MarketMatcher(str(MARKETS_CONFIG), str(POSTCODE_MAP))
 generator = ProfileGenerator(str(STRATEGY_WEIGHTS))
@@ -138,9 +151,15 @@ def process_pdf(
         )
 
         # Generate profile (fit score + narrative)
-        # NOTE: In production, pillar_scores would come from the screening framework
-        # For now, provide mock scores or handle gracefully
-        pillar_scores = {}  # Would be populated from screening matrix
+        # Use pre-computed pillar scores from scored_markets.json
+        # ProfileGenerator expects: {'uk-73': {'Supply': 75, 'Demand': 33.3, ...}, ...}
+        pillar_scores = {}
+        if market_ids:
+            for market_id in market_ids:
+                scores = get_pillar_scores(market_id)
+                if scores:
+                    pillar_scores[market_id] = scores
+
         profile = generator.generate(
             market_ids if market_ids else [],
             pillar_scores,

@@ -15,9 +15,8 @@ CRITICAL RULES:
 2. If a field is not clearly mentioned, return null - NEVER guess or infer
 3. Return valid JSON matching the exact schema provided
 4. For prices/areas/NOI, extract as NUMBER ONLY - no currency symbols, no units
-5. For property type/use, use standard categories: Industrial, Logistics, Office, Retail, Mixed Use, Parking, Residential, Hotel, Land, Development, Other
-6. For Type: Identify document type - "IM" for Investment Memorandum, "Teaser" for teaser/summary documents
-7. For Address: Extract specific street address if stated
+5. For Type: Identify document type - "IM" for Investment Memorandum, "Teaser" for teaser/summary documents
+6. For Address: Extract specific street address if stated
 
 IMPORTANT - UK Terminology:
 8. Area should be in SQUARE FEET (sq ft) - UK standard. Look for "sq ft", "sqft", "SF"
@@ -54,7 +53,6 @@ Return a JSON object with these fields (use null if not explicitly stated):
   "Address": "<street address if stated>",
   "Postal code": "<UK postcode if stated>",
   "Property designation": "<land registry reference or postcode area if stated>",
-  "Use": "<property type: Industrial, Logistics, Office, Retail, Mixed Use, Parking, Residential, Hotel, Land, Development, Other>",
   "Leasable area, sq ft": "<area in SQUARE FEET as NUMBER ONLY - convert from sqm if needed>",
   "Year Built": "<construction year or age range as stated, e.g. '2025', '1990-2001', '1970s+'. null if not stated.>",
   "Number of Tenants": "<integer count of tenants/lettings if stated. null otherwise.>",

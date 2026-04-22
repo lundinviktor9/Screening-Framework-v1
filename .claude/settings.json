@@ -4,7 +4,8 @@
       "Bash(node -e ' *)",
       "Bash(python3 -c ' *)",
       "Bash(pip install *)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")"
     ]
   }
 }

@@ -116,7 +116,6 @@ class Extractor:
 
         # Field name mappings (extracted name -> schema name)
         mappings = {
-            "Use": "Use",
             "Leasable area, sq ft": "Leasable area, sq ft",
             "Base rent, psf": "Base rent incl. index, CCY/sqft",
             "NOI": "NOI, CCY",
