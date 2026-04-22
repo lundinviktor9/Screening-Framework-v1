@@ -322,3 +322,87 @@ Keep TASKS.md updated after every session with:
 - Any blockers or decisions needed from the user
 
 ---
+
+## DEAL PIPELINE SERVER (Task 5 — Live as of April 22, 2026)
+
+The deal extraction pipeline (Tasks 1-4) is now wrapped in a FastAPI server at port 8787.
+
+### Two-Command Startup
+
+**Terminal 1: React frontend**
+```bash
+npm run dev
+# Runs webpack at http://localhost:5173
+```
+
+**Terminal 2: Deal pipeline server**
+```bash
+npm run extractor
+# OR
+python -m uvicorn extractor.server:app --port 8787 --reload
+```
+
+Server is ready when you see: `Uvicorn running on http://0.0.0.0:8787`
+
+### API Endpoints
+
+All endpoints accept/return JSON. CORS configured for localhost:5173.
+
+**Upload & Extract:**
+- `POST /ingest` — multipart upload, single or multiple PDFs
+  - Returns: `[{ deal_id, status, extracted_fields, market_ids, fit_score, narrative, ... }]`
+  - Query param: `?force=true` to re-extract (bypasses idempotency cache)
+
+- `POST /ingest-folder?folder_path=deals_inbox` — batch extract from folder
+  - Returns: array of DealRecords
+
+**Deal Management:**
+- `GET /deals` — list all extracted deals
+- `GET /deals/{deal_id}` — single deal detail
+- `POST /deals/{deal_id}/market-override` — override matched market
+  - Body: `{ "market_ids": ["glasgow"] }`
+- `DELETE /deals/{deal_id}` — remove a deal
+
+**Utilities:**
+- `GET /pdf/{deal_id}` — retrieve original PDF (for "Open PDF" button in UI)
+- `GET /health` — health check
+- `GET /docs` — interactive API docs (Swagger)
+
+### Batch Ingest Workflow
+
+1. Drop PDFs into `deals_inbox/` folder
+2. From Pipeline tab in UI, click "Process Inbox" OR run:
+   ```bash
+   npm run ingest-inbox
+   ```
+3. Server processes all PDFs, updates `src/data/deals.json`
+4. React Pipeline tab auto-refreshes with new deals
+
+### Environment Variables
+
+**Required:**
+- `ANTHROPIC_API_KEY` — set in `.env` or export to shell
+
+**Optional:**
+- `DEALS_INBOX_PATH` — path to deals folder (default: `deals_inbox`)
+
+### Deal Status Lifecycle
+
+- `extracted` — initial state, location has been matched and fit score calculated
+- `reviewed` — user has confirmed the match (or overridden market)
+- `failed` — extraction error (Claude API timeout, unparseable PDF, etc.)
+  - "Retry" button in UI re-runs with `?force=true`
+
+### Idempotency
+
+Before extraction, the server hashes PDF bytes (SHA256). If a deal with that hash
+already exists in `deals.json`, extraction is skipped and the existing record returned.
+
+This prevents duplicate ingestion if the same PDF is uploaded twice.
+
+**Force re-extraction** (e.g., after updating prompts):
+```bash
+curl -X POST "http://localhost:8787/ingest?force=true" -F "file=@West_Craigs.pdf"
+```
+
+---

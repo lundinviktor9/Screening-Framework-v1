@@ -1,8 +1,11 @@
-# Deal-pipeline extractor dependencies (Task 1 — PDF read + Claude extraction + normalization)
-# A minimal subset of the Nordic repo's requirements.txt. FastAPI/uvicorn land
-# in Task 5; beautifulsoup4 + requests + openpyxl aren't used in the UK path.
+# Deal-pipeline extractor dependencies
+# Task 1-4: PDF read, Claude extraction, normalization, market matching, profiling
+# Task 5: FastAPI server for HTTP endpoints
 
 anthropic>=0.18.0
 pypdf>=4.0.0
 pyyaml>=6.0
 python-dotenv>=1.0.0
+fastapi>=0.104.0
+uvicorn>=0.24.0
+python-multipart>=0.0.6

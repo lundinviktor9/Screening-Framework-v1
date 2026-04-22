@@ -39,6 +39,8 @@ function mkt(
   id: string,
   name: string,
   region: string,
+  lat: number,
+  lng: number,
   v: V,
 ): MarketInput {
   const sources: S = {};
@@ -58,6 +60,9 @@ function mkt(
     id,
     name,
     region,
+    lat,
+    lng,
+    aliases: [],
     notes: 'Tier A metrics pre-filled from public sources. Commercial metrics (vacancy, rents, yields) require manual entry from CoStar/MSCI.',
     isPreFilled: true,
     values: v,
@@ -70,7 +75,7 @@ function mkt(
 export const UK_MARKETS: MarketInput[] = [
 
   // ─── LONDON ────────────────────────────────────────────────────────────────
-  mkt('uk-01', 'Greater London', 'London', {
+  mkt('uk-01', 'Greater London', 'London', 51.5074, -0.1278, {
     8: 4.5, 9: 72,
     15: 4.2, 16: 95, 18: 0.7,
     22: 2, 23: 5, 24: 30, 25: 20,
@@ -80,7 +85,7 @@ export const UK_MARKETS: MarketInput[] = [
   }),
 
   // ─── SOUTH EAST ────────────────────────────────────────────────────────────
-  mkt('uk-02', 'Crawley', 'South East', {
+  mkt('uk-02', 'Crawley', 'South East', 51.1099, -0.1895, {
     8: 3.8, 9: 74,
     15: 3.5, 16: 78, 18: 1.0,
     22: 3, 23: 22, 24: 65, 25: 5,
@@ -88,7 +93,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 108, 39: 110, 40: 9,
     56: 5200, 58: 3, 59: 320,
   }),
-  mkt('uk-03', 'Reading', 'South East', {
+  mkt('uk-03', 'Reading', 'South East', 51.4543, -0.9781, {
     8: 3.5, 9: 76,
     15: 3.8, 16: 82, 18: 0.9,
     22: 2, 23: 15, 24: 60, 25: 25,
@@ -96,7 +101,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 112, 39: 112, 40: 9,
     56: 6500, 58: 4, 59: 350,
   }),
-  mkt('uk-04', 'Maidstone', 'South East', {
+  mkt('uk-04', 'Maidstone', 'South East', 51.272, 0.5299, {
     8: 3.2, 9: 75,
     15: 3.2, 16: 74, 18: 0.9,
     22: 4, 23: 15, 24: 50, 25: 30,
@@ -104,7 +109,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 105, 39: 105, 40: 9,
     56: 4800, 58: 4, 59: 280,
   }),
-  mkt('uk-05', 'South Hampshire', 'South East', {
+  mkt('uk-05', 'South Hampshire', 'South East', 50.9097, -1.4044, {
     8: 3.0, 9: 78,
     15: 3.3, 16: 76, 18: 1.0,
     22: 3, 23: 5, 24: 5, 25: 5,
@@ -112,7 +117,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 103, 39: 103, 40: 10,
     56: 5500, 58: 5, 59: 300,
   }),
-  mkt('uk-06', 'Milton Keynes', 'South East', {
+  mkt('uk-06', 'Milton Keynes', 'South East', 52.0406, -0.7594, {
     8: 2.8, 9: 82,
     15: 4.0, 16: 80, 18: 1.2,
     22: 2, 23: 8, 24: 100, 25: 55,
@@ -120,7 +125,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 102, 39: 102, 40: 13,
     56: 6800, 58: 3, 59: 330,
   }),
-  mkt('uk-07', 'Slough', 'South East', {
+  mkt('uk-07', 'Slough', 'South East', 51.5105, -0.595, {
     8: 4.0, 9: 70,
     15: 3.8, 16: 85, 18: 1.1,
     22: 2, 23: 12, 24: 50, 25: 5,
@@ -128,7 +133,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 115, 39: 115, 40: 10,
     56: 12000, 58: 4, 59: 380,
   }),
-  mkt('uk-08', 'Hastings', 'South East', {
+  mkt('uk-08', 'Hastings', 'South East', 50.8543, 0.573, {
     8: 3.0, 9: 76,
     15: 2.5, 16: 65, 18: 0.7,
     22: 12, 23: 40, 24: 30, 25: 50,
@@ -136,7 +141,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 95, 39: 95, 40: 7,
     56: 1800, 58: 5, 59: 180,
   }),
-  mkt('uk-09', 'High Wycombe', 'South East', {
+  mkt('uk-09', 'High Wycombe', 'South East', 51.6288, -0.7482, {
     8: 3.8, 9: 74,
     15: 3.5, 16: 78, 18: 0.9,
     22: 3, 23: 15, 24: 60, 25: 25,
@@ -144,7 +149,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 110, 39: 110, 40: 9,
     56: 5500, 58: 3, 59: 310,
   }),
-  mkt('uk-10', 'Basingstoke', 'South East', {
+  mkt('uk-10', 'Basingstoke', 'South East', 51.2667, -1.0876, {
     8: 3.0, 9: 78,
     15: 3.3, 16: 74, 18: 1.0,
     22: 3, 23: 20, 24: 35, 25: 45,
@@ -152,7 +157,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 106, 39: 106, 40: 10,
     56: 4200, 58: 3, 59: 300,
   }),
-  mkt('uk-11', 'Brighton & Hove', 'South East', {
+  mkt('uk-11', 'Brighton & Hove', 'South East', 50.8225, -0.1372, {
     8: 4.0, 9: 71,
     15: 3.5, 16: 82, 18: 0.7,
     22: 6, 23: 20, 24: 8, 25: 20,
@@ -160,7 +165,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 102, 39: 102, 40: 7,
     56: 4000, 58: 4, 59: 290,
   }),
-  mkt('uk-12', 'Medway Towns', 'South East', {
+  mkt('uk-12', 'Medway Towns', 'South East', 51.384, 0.5229, {
     8: 3.2, 9: 77,
     15: 2.8, 16: 68, 18: 1.0,
     22: 3, 23: 8, 24: 30, 25: 50,
@@ -168,7 +173,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 100, 39: 100, 40: 10,
     56: 5000, 58: 6, 59: 260,
   }),
-  mkt('uk-13', 'Eastbourne', 'South East', {
+  mkt('uk-13', 'Eastbourne', 'South East', 50.7684, 0.282, {
     8: 3.2, 9: 74,
     15: 2.5, 16: 63, 18: 0.7,
     22: 10, 23: 35, 24: 35, 25: 45,
@@ -176,7 +181,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 96, 39: 96, 40: 7,
     56: 1500, 58: 5, 59: 200,
   }),
-  mkt('uk-14', 'Farnborough / Aldershot', 'South East', {
+  mkt('uk-14', 'Farnborough / Aldershot', 'South East', 51.2968, -0.7542, {
     8: 3.5, 9: 76,
     15: 3.5, 16: 76, 18: 1.0,
     22: 3, 23: 20, 24: 40, 25: 20,
@@ -184,7 +189,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 108, 39: 108, 40: 9,
     56: 4800, 58: 3, 59: 310,
   }),
-  mkt('uk-15', 'Oxford', 'South East', {
+  mkt('uk-15', 'Oxford', 'South East', 51.752, -1.2577, {
     8: 4.2, 9: 72,
     15: 3.5, 16: 80, 18: 0.8,
     22: 5, 23: 12, 24: 90, 25: 55,
@@ -192,7 +197,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 108, 39: 108, 40: 8,
     56: 4500, 58: 4, 59: 290,
   }),
-  mkt('uk-16', 'Thanet', 'South East', {
+  mkt('uk-16', 'Thanet', 'South East', 51.3814, 1.3895, {
     8: 3.0, 9: 76,
     15: 2.5, 16: 60, 18: 0.8,
     22: 12, 23: 15, 24: 20, 25: 15,
@@ -202,7 +207,7 @@ export const UK_MARKETS: MarketInput[] = [
   }),
 
   // ─── EAST OF ENGLAND ───────────────────────────────────────────────────────
-  mkt('uk-17', 'Norwich', 'East of England', {
+  mkt('uk-17', 'Norwich', 'East of England', 52.6309, 1.2974, {
     8: 2.8, 9: 82,
     15: 2.8, 16: 68, 18: 0.9,
     22: 15, 23: 30, 24: 50, 25: 5,
@@ -210,7 +215,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 92, 39: 92, 40: 9,
     56: 3000, 58: 5, 59: 230,
   }),
-  mkt('uk-18', 'Chelmsford', 'East of England', {
+  mkt('uk-18', 'Chelmsford', 'East of England', 51.7361, 0.4798, {
     8: 3.5, 9: 78,
     15: 3.0, 16: 74, 18: 0.9,
     22: 6, 23: 20, 24: 35, 25: 20,
@@ -218,7 +223,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 100, 39: 100, 40: 9,
     56: 3500, 58: 4, 59: 270,
   }),
-  mkt('uk-19', 'Peterborough', 'East of England', {
+  mkt('uk-19', 'Peterborough', 'East of England', 52.5695, -0.2405, {
     8: 2.5, 9: 84,
     15: 3.2, 16: 68, 18: 1.3,
     22: 4, 23: 8, 24: 80, 25: 35,
@@ -226,7 +231,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 93, 39: 93, 40: 14,
     56: 3800, 58: 5, 59: 240,
   }),
-  mkt('uk-20', 'Ipswich', 'East of England', {
+  mkt('uk-20', 'Ipswich', 'East of England', 52.0567, 1.1482, {
     8: 2.8, 9: 82,
     15: 2.8, 16: 70, 18: 1.0,
     22: 10, 23: 15, 24: 15, 25: 25,
@@ -234,7 +239,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 93, 39: 93, 40: 10,
     56: 2500, 58: 6, 59: 230,
   }),
-  mkt('uk-21', 'Cambridge', 'East of England', {
+  mkt('uk-21', 'Cambridge', 'East of England', 52.2053, 0.1218, {
     8: 4.0, 9: 74,
     15: 4.0, 16: 82, 18: 0.8,
     22: 6, 23: 20, 24: 60, 25: 15,
@@ -242,7 +247,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 108, 39: 108, 40: 8,
     56: 4500, 58: 4, 59: 320,
   }),
-  mkt('uk-22', 'Colchester', 'East of England', {
+  mkt('uk-22', 'Colchester', 'East of England', 51.8959, 0.8919, {
     8: 2.8, 9: 82,
     15: 2.8, 16: 68, 18: 0.9,
     22: 8, 23: 20, 24: 20, 25: 30,
@@ -250,7 +255,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 96, 39: 96, 40: 9,
     56: 2800, 58: 5, 59: 240,
   }),
-  mkt('uk-23', 'Bedford', 'East of England', {
+  mkt('uk-23', 'Bedford', 'East of England', 52.1361, -0.4667, {
     8: 2.5, 9: 83,
     15: 3.0, 16: 70, 18: 1.1,
     22: 5, 23: 10, 24: 90, 25: 30,
@@ -258,7 +263,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 98, 39: 98, 40: 12,
     56: 3500, 58: 4, 59: 260,
   }),
-  mkt('uk-24', 'Luton', 'East of England', {
+  mkt('uk-24', 'Luton', 'East of England', 51.8787, -0.42, {
     8: 3.0, 9: 79,
     15: 3.2, 16: 72, 18: 1.0,
     22: 3, 23: 8, 24: 70, 25: 5,
@@ -266,7 +271,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 100, 39: 100, 40: 10,
     56: 5000, 58: 3, 59: 280,
   }),
-  mkt('uk-25', 'Basildon', 'East of England', {
+  mkt('uk-25', 'Basildon', 'East of England', 51.5731, 0.4906, {
     8: 3.0, 9: 78,
     15: 2.8, 16: 68, 18: 1.1,
     22: 4, 23: 15, 24: 20, 25: 30,
@@ -274,7 +279,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 98, 39: 98, 40: 10,
     56: 3200, 58: 6, 59: 250,
   }),
-  mkt('uk-26', 'Southend-on-Sea', 'East of England', {
+  mkt('uk-26', 'Southend-on-Sea', 'East of England', 51.5461, 0.7077, {
     8: 3.2, 9: 76,
     15: 2.5, 16: 64, 18: 0.8,
     22: 4, 23: 18, 24: 25, 25: 15,
@@ -284,7 +289,7 @@ export const UK_MARKETS: MarketInput[] = [
   }),
 
   // ─── WEST MIDLANDS ─────────────────────────────────────────────────────────
-  mkt('uk-27', 'Birmingham / Solihull', 'West Midlands', {
+  mkt('uk-27', 'Birmingham / Solihull', 'West Midlands', 52.4862, -1.8904, {
     8: 3.0, 9: 80,
     15: 3.0, 16: 68, 18: 1.1,
     22: 2, 23: 5, 24: 100, 25: 20,
@@ -292,7 +297,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 97, 39: 97, 40: 11,
     56: 8500, 58: 4, 59: 280,
   }),
-  mkt('uk-28', 'Black Country', 'West Midlands', {
+  mkt('uk-28', 'Black Country', 'West Midlands', 52.507, -2.05, {
     8: 2.8, 9: 82,
     15: 2.5, 16: 62, 18: 1.3,
     22: 2, 23: 8, 24: 90, 25: 28,
@@ -300,7 +305,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 94, 39: 94, 40: 14,
     56: 6000, 58: 4, 59: 240,
   }),
-  mkt('uk-29', 'Coventry', 'West Midlands', {
+  mkt('uk-29', 'Coventry', 'West Midlands', 52.4068, -1.5197, {
     8: 2.8, 9: 81,
     15: 3.0, 16: 68, 18: 1.2,
     22: 2, 23: 12, 24: 110, 25: 15,
@@ -308,7 +313,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 96, 39: 96, 40: 12,
     56: 5500, 58: 4, 59: 270,
   }),
-  mkt('uk-30', 'Telford', 'West Midlands', {
+  mkt('uk-30', 'Telford', 'West Midlands', 52.6766, -2.4469, {
     8: 2.5, 9: 84,
     15: 2.8, 16: 62, 18: 1.1,
     22: 5, 23: 25, 24: 80, 25: 55,
@@ -318,7 +323,7 @@ export const UK_MARKETS: MarketInput[] = [
   }),
 
   // ─── EAST MIDLANDS ─────────────────────────────────────────────────────────
-  mkt('uk-31', 'Leicester', 'East Midlands', {
+  mkt('uk-31', 'Leicester', 'East Midlands', 52.6369, -1.1398, {
     8: 2.8, 9: 82,
     15: 3.0, 16: 68, 18: 1.3,
     22: 3, 23: 10, 24: 115, 25: 15,
@@ -326,7 +331,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 93, 39: 93, 40: 14,
     56: 5500, 58: 4, 59: 260,
   }),
-  mkt('uk-32', 'Northampton', 'East Midlands', {
+  mkt('uk-32', 'Northampton', 'East Midlands', 52.2405, -0.9027, {
     8: 2.5, 9: 85,
     15: 3.2, 16: 70, 18: 1.5,
     22: 3, 23: 5, 24: 110, 25: 25,
@@ -334,7 +339,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 94, 39: 94, 40: 18,
     56: 4800, 58: 4, 59: 260,
   }),
-  mkt('uk-33', 'Derby', 'East Midlands', {
+  mkt('uk-33', 'Derby', 'East Midlands', 52.9226, -1.4746, {
     8: 2.5, 9: 84,
     15: 2.8, 16: 66, 18: 1.2,
     22: 5, 23: 8, 24: 120, 25: 12,
@@ -342,7 +347,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 94, 39: 94, 40: 14,
     56: 4200, 58: 4, 59: 255,
   }),
-  mkt('uk-34', 'Nottingham', 'East Midlands', {
+  mkt('uk-34', 'Nottingham', 'East Midlands', 52.9548, -1.1581, {
     8: 2.8, 9: 82,
     15: 3.0, 16: 68, 18: 1.2,
     22: 4, 23: 8, 24: 100, 25: 10,
@@ -350,7 +355,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 93, 39: 93, 40: 13,
     56: 4500, 58: 5, 59: 265,
   }),
-  mkt('uk-35', 'Stoke-on-Trent', 'East Midlands', {
+  mkt('uk-35', 'Stoke-on-Trent', 'East Midlands', 53.0027, -2.1794, {
     8: 2.5, 9: 83,
     15: 2.0, 16: 58, 18: 1.1,
     22: 4, 23: 15, 24: 90, 25: 45,
@@ -358,7 +363,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 90, 39: 90, 40: 12,
     56: 2500, 58: 3, 59: 220,
   }),
-  mkt('uk-36', 'Chesterfield', 'East Midlands', {
+  mkt('uk-36', 'Chesterfield', 'East Midlands', 53.235, -1.4209, {
     8: 2.5, 9: 84,
     15: 2.5, 16: 62, 18: 1.2,
     22: 4, 23: 12, 24: 80, 25: 25,
@@ -366,7 +371,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 91, 39: 91, 40: 13,
     56: 2500, 58: 3, 59: 235,
   }),
-  mkt('uk-37', 'Mansfield', 'East Midlands', {
+  mkt('uk-37', 'Mansfield', 'East Midlands', 53.1476, -1.195, {
     8: 2.5, 9: 84,
     15: 2.2, 16: 60, 18: 1.2,
     22: 5, 23: 15, 24: 90, 25: 20,
@@ -374,7 +379,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 90, 39: 90, 40: 13,
     56: 2000, 58: 4, 59: 215,
   }),
-  mkt('uk-38', 'Lincoln', 'East Midlands', {
+  mkt('uk-38', 'Lincoln', 'East Midlands', 53.2307, -0.5406, {
     8: 2.8, 9: 82,
     15: 2.5, 16: 62, 18: 1.0,
     22: 20, 23: 20, 24: 50, 25: 35,
@@ -382,7 +387,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 89, 39: 89, 40: 11,
     56: 1800, 58: 5, 59: 200,
   }),
-  mkt('uk-39', 'Burton-upon-Trent', 'East Midlands', {
+  mkt('uk-39', 'Burton-upon-Trent', 'East Midlands', 52.8019, -1.6367, {
     8: 2.5, 9: 85,
     15: 2.5, 16: 62, 18: 1.4,
     22: 4, 23: 10, 24: 80, 25: 15,
@@ -392,7 +397,7 @@ export const UK_MARKETS: MarketInput[] = [
   }),
 
   // ─── YORKSHIRE & HUMBER ────────────────────────────────────────────────────
-  mkt('uk-40', 'West Yorkshire (Leeds)', 'Yorkshire & Humber', {
+  mkt('uk-40', 'West Yorkshire (Leeds)', 'Yorkshire & Humber', 53.7997, -1.5492, {
     8: 2.8, 9: 82,
     15: 3.0, 16: 66, 18: 1.1,
     22: 3, 23: 5, 24: 50, 25: 12,
@@ -400,7 +405,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 93, 39: 93, 40: 12,
     56: 7000, 58: 5, 59: 275,
   }),
-  mkt('uk-41', 'Sheffield', 'Yorkshire & Humber', {
+  mkt('uk-41', 'Sheffield', 'Yorkshire & Humber', 53.3811, -1.4701, {
     8: 2.8, 9: 82,
     15: 2.8, 16: 64, 18: 1.1,
     22: 4, 23: 12, 24: 60, 25: 15,
@@ -408,7 +413,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 91, 39: 91, 40: 12,
     56: 4000, 58: 4, 59: 260,
   }),
-  mkt('uk-42', 'Grimsby', 'Yorkshire & Humber', {
+  mkt('uk-42', 'Grimsby', 'Yorkshire & Humber', 53.5674, -0.0806, {
     8: 2.5, 9: 85,
     15: 2.0, 16: 58, 18: 1.4,
     22: 12, 23: 8, 24: 5, 25: 25,
@@ -416,7 +421,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 88, 39: 88, 40: 14,
     56: 1500, 58: 10, 59: 185,
   }),
-  mkt('uk-43', 'York', 'Yorkshire & Humber', {
+  mkt('uk-43', 'York', 'Yorkshire & Humber', 53.959, -1.0815, {
     8: 3.0, 9: 80,
     15: 2.8, 16: 68, 18: 0.9,
     22: 6, 23: 5, 24: 40, 25: 35,
@@ -424,7 +429,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 95, 39: 95, 40: 10,
     56: 2800, 58: 12, 59: 260,
   }),
-  mkt('uk-44', 'Barnsley / Dearne Valley', 'Yorkshire & Humber', {
+  mkt('uk-44', 'Barnsley / Dearne Valley', 'Yorkshire & Humber', 53.5527, -1.4797, {
     8: 2.5, 9: 85,
     15: 2.2, 16: 58, 18: 1.6,
     22: 3, 23: 8, 24: 55, 25: 12,
@@ -432,7 +437,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 89, 39: 89, 40: 16,
     56: 2500, 58: 5, 59: 225,
   }),
-  mkt('uk-45', 'Doncaster', 'Yorkshire & Humber', {
+  mkt('uk-45', 'Doncaster', 'Yorkshire & Humber', 53.5228, -1.1285, {
     8: 2.5, 9: 85,
     15: 2.5, 16: 60, 18: 1.7,
     22: 3, 23: 5, 24: 50, 25: 5,
@@ -440,7 +445,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 89, 39: 89, 40: 17,
     56: 2500, 58: 8, 59: 220,
   }),
-  mkt('uk-46', 'Kingston upon Hull', 'Yorkshire & Humber', {
+  mkt('uk-46', 'Kingston upon Hull', 'Yorkshire & Humber', 53.7457, -0.3367, {
     8: 2.5, 9: 84,
     15: 2.2, 16: 60, 18: 1.3,
     22: 5, 23: 6, 24: 5, 25: 25,
@@ -450,7 +455,7 @@ export const UK_MARKETS: MarketInput[] = [
   }),
 
   // ─── NORTH WEST ────────────────────────────────────────────────────────────
-  mkt('uk-47', 'Greater Manchester', 'North West', {
+  mkt('uk-47', 'Greater Manchester', 'North West', 53.4808, -2.2426, {
     8: 3.0, 9: 81,
     15: 3.2, 16: 72, 18: 1.2,
     22: 2, 23: 5, 24: 50, 25: 5,
@@ -458,7 +463,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 95, 39: 95, 40: 12,
     56: 9000, 58: 4, 59: 290,
   }),
-  mkt('uk-48', 'Liverpool', 'North West', {
+  mkt('uk-48', 'Liverpool', 'North West', 53.4084, -2.9916, {
     8: 3.0, 9: 79,
     15: 2.8, 16: 68, 18: 1.2,
     22: 2, 23: 8, 24: 5, 25: 10,
@@ -466,7 +471,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 92, 39: 92, 40: 12,
     56: 5000, 58: 5, 59: 265,
   }),
-  mkt('uk-49', 'Preston', 'North West', {
+  mkt('uk-49', 'Preston', 'North West', 53.7632, -2.7031, {
     8: 2.5, 9: 83,
     15: 2.5, 16: 64, 18: 1.0,
     22: 2, 23: 12, 24: 50, 25: 30,
@@ -474,7 +479,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 91, 39: 91, 40: 11,
     56: 3000, 58: 4, 59: 240,
   }),
-  mkt('uk-50', 'Wigan', 'North West', {
+  mkt('uk-50', 'Wigan', 'North West', 53.5453, -2.6328, {
     8: 2.5, 9: 83,
     15: 2.5, 16: 64, 18: 1.2,
     22: 2, 23: 8, 24: 35, 25: 25,
@@ -482,7 +487,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 91, 39: 91, 40: 13,
     56: 3500, 58: 4, 59: 245,
   }),
-  mkt('uk-51', 'Burnley', 'North West', {
+  mkt('uk-51', 'Burnley', 'North West', 53.7895, -2.2374, {
     8: 2.5, 9: 84,
     15: 2.0, 16: 58, 18: 1.2,
     22: 4, 23: 15, 24: 65, 25: 35,
@@ -490,7 +495,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 89, 39: 89, 40: 13,
     56: 1800, 58: 3, 59: 220,
   }),
-  mkt('uk-52', 'Blackburn', 'North West', {
+  mkt('uk-52', 'Blackburn', 'North West', 53.7481, -2.4817, {
     8: 2.5, 9: 83,
     15: 2.2, 16: 60, 18: 1.1,
     22: 4, 23: 15, 24: 60, 25: 35,
@@ -498,7 +503,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 89, 39: 89, 40: 12,
     56: 2200, 58: 3, 59: 220,
   }),
-  mkt('uk-53', 'Warrington', 'North West', {
+  mkt('uk-53', 'Warrington', 'North West', 53.39, -2.597, {
     8: 2.5, 9: 85,
     15: 3.0, 16: 70, 18: 1.5,
     22: 2, 23: 8, 24: 30, 25: 15,
@@ -506,7 +511,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 96, 39: 96, 40: 16,
     56: 4500, 58: 4, 59: 270,
   }),
-  mkt('uk-54', 'Accrington / Rossendale', 'North West', {
+  mkt('uk-54', 'Accrington / Rossendale', 'North West', 53.7534, -2.364, {
     8: 2.5, 9: 84,
     15: 2.0, 16: 58, 18: 1.1,
     22: 5, 23: 12, 24: 60, 25: 35,
@@ -514,7 +519,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 88, 39: 88, 40: 12,
     56: 1500, 58: 3, 59: 200,
   }),
-  mkt('uk-55', 'Blackpool', 'North West', {
+  mkt('uk-55', 'Blackpool', 'North West', 53.8175, -3.0357, {
     8: 2.5, 9: 82,
     15: 2.0, 16: 60, 18: 0.9,
     22: 4, 23: 15, 24: 25, 25: 5,
@@ -522,7 +527,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 88, 39: 88, 40: 9,
     56: 1500, 58: 6, 59: 190,
   }),
-  mkt('uk-56', 'Birkenhead', 'North West', {
+  mkt('uk-56', 'Birkenhead', 'North West', 53.3933, -3.0146, {
     8: 2.8, 9: 80,
     15: 2.5, 16: 64, 18: 1.1,
     22: 3, 23: 10, 24: 3, 25: 15,
@@ -532,7 +537,7 @@ export const UK_MARKETS: MarketInput[] = [
   }),
 
   // ─── NORTH EAST ────────────────────────────────────────────────────────────
-  mkt('uk-57', 'Sunderland', 'North East', {
+  mkt('uk-57', 'Sunderland', 'North East', 54.9069, -1.3838, {
     8: 2.5, 9: 84,
     15: 2.0, 16: 58, 18: 1.1,
     22: 4, 23: 15, 24: 5, 25: 15,
@@ -540,7 +545,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 88, 39: 88, 40: 12,
     56: 2000, 58: 5, 59: 210,
   }),
-  mkt('uk-58', 'Tyneside', 'North East', {
+  mkt('uk-58', 'Tyneside', 'North East', 54.9783, -1.6178, {
     8: 2.8, 9: 82,
     15: 2.5, 16: 62, 18: 1.0,
     22: 3, 23: 8, 24: 10, 25: 8,
@@ -548,7 +553,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 90, 39: 90, 40: 11,
     56: 2800, 58: 5, 59: 230,
   }),
-  mkt('uk-59', 'Teesside', 'North East', {
+  mkt('uk-59', 'Teesside', 'North East', 54.5751, -1.2348, {
     8: 2.5, 9: 85,
     15: 2.0, 16: 58, 18: 1.3,
     22: 4, 23: 8, 24: 5, 25: 10,
@@ -558,7 +563,7 @@ export const UK_MARKETS: MarketInput[] = [
   }),
 
   // ─── SOUTH WEST ────────────────────────────────────────────────────────────
-  mkt('uk-60', 'Bristol', 'South West', {
+  mkt('uk-60', 'Bristol', 'South West', 51.4545, -2.5879, {
     8: 3.5, 9: 78,
     15: 3.8, 16: 78, 18: 1.0,
     22: 2, 23: 8, 24: 5, 25: 10,
@@ -566,7 +571,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 100, 39: 100, 40: 10,
     56: 5500, 58: 8, 59: 300,
   }),
-  mkt('uk-61', 'Cheltenham', 'South West', {
+  mkt('uk-61', 'Cheltenham', 'South West', 51.8994, -2.0785, {
     8: 3.2, 9: 78,
     15: 3.0, 16: 72, 18: 0.9,
     22: 4, 23: 15, 24: 40, 25: 20,
@@ -574,7 +579,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 100, 39: 100, 40: 9,
     56: 3000, 58: 4, 59: 270,
   }),
-  mkt('uk-62', 'Bournemouth / Poole', 'South West', {
+  mkt('uk-62', 'Bournemouth / Poole', 'South West', 50.7192, -1.8808, {
     8: 3.2, 9: 77,
     15: 3.0, 16: 72, 18: 0.8,
     22: 4, 23: 30, 24: 5, 25: 5,
@@ -582,7 +587,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 97, 39: 97, 40: 8,
     56: 3500, 58: 5, 59: 280,
   }),
-  mkt('uk-63', 'Gloucester', 'South West', {
+  mkt('uk-63', 'Gloucester', 'South West', 51.8642, -2.2382, {
     8: 3.0, 9: 80,
     15: 2.8, 16: 68, 18: 1.0,
     22: 4, 23: 12, 24: 25, 25: 25,
@@ -590,7 +595,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 97, 39: 97, 40: 10,
     56: 2500, 58: 6, 59: 250,
   }),
-  mkt('uk-64', 'Exeter', 'South West', {
+  mkt('uk-64', 'Exeter', 'South West', 50.7184, -3.5339, {
     8: 3.0, 9: 79,
     15: 2.8, 16: 68, 18: 0.9,
     22: 5, 23: 20, 24: 70, 25: 5,
@@ -598,7 +603,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 96, 39: 96, 40: 9,
     56: 2500, 58: 5, 59: 250,
   }),
-  mkt('uk-65', 'Plymouth', 'South West', {
+  mkt('uk-65', 'Plymouth', 'South West', 50.3755, -4.1427, {
     8: 3.0, 9: 79,
     15: 2.5, 16: 64, 18: 0.9,
     22: 6, 23: 35, 24: 5, 25: 5,
@@ -606,7 +611,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 93, 39: 93, 40: 9,
     56: 2000, 58: 5, 59: 220,
   }),
-  mkt('uk-66', 'Swindon', 'South West', {
+  mkt('uk-66', 'Swindon', 'South West', 51.558, -1.7826, {
     8: 2.8, 9: 82,
     15: 3.2, 16: 70, 18: 1.1,
     22: 2, 23: 12, 24: 55, 25: 30,
@@ -614,7 +619,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 100, 39: 100, 40: 12,
     56: 3500, 58: 3, 59: 280,
   }),
-  mkt('uk-67', 'Torquay / Paignton', 'South West', {
+  mkt('uk-67', 'Torquay / Paignton', 'South West', 50.4619, -3.5253, {
     8: 3.0, 9: 77,
     15: 2.2, 16: 62, 18: 0.7,
     22: 8, 23: 35, 24: 30, 25: 20,
@@ -624,7 +629,7 @@ export const UK_MARKETS: MarketInput[] = [
   }),
 
   // ─── WALES ─────────────────────────────────────────────────────────────────
-  mkt('uk-68', 'Cardiff', 'Wales', {
+  mkt('uk-68', 'Cardiff', 'Wales', 51.4816, -3.1791, {
     8: 3.0, 9: 80,
     15: 2.8, 16: 68, 18: 1.0,
     22: 3, 23: 8, 24: 5, 25: 20,
@@ -632,7 +637,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 92, 39: 92, 40: 10,
     56: 4000, 58: 7, 59: 250,
   }),
-  mkt('uk-69', 'Newport', 'Wales', {
+  mkt('uk-69', 'Newport', 'Wales', 51.5842, -2.9977, {
     8: 2.8, 9: 82,
     15: 2.5, 16: 64, 18: 1.2,
     22: 2, 23: 5, 24: 3, 25: 25,
@@ -640,7 +645,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 90, 39: 90, 40: 12,
     56: 3000, 58: 7, 59: 230,
   }),
-  mkt('uk-70', 'Swansea', 'Wales', {
+  mkt('uk-70', 'Swansea', 'Wales', 51.6214, -3.9436, {
     8: 2.8, 9: 81,
     15: 2.2, 16: 62, 18: 0.9,
     22: 4, 23: 12, 24: 3, 25: 25,
@@ -650,7 +655,7 @@ export const UK_MARKETS: MarketInput[] = [
   }),
 
   // ─── SCOTLAND ──────────────────────────────────────────────────────────────
-  mkt('uk-71', 'Greater Glasgow', 'Scotland', {
+  mkt('uk-71', 'Greater Glasgow', 'Scotland', 55.8642, -4.2518, {
     8: 3.2, 9: 80,
     15: 3.0, 16: 70, 18: 1.0,
     22: 2, 23: 5, 24: 25, 25: 12,
@@ -658,7 +663,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 97, 39: 97, 40: 10,
     56: 4500, 58: 4, 59: 280,
   }),
-  mkt('uk-72', 'Motherwell', 'Scotland', {
+  mkt('uk-72', 'Motherwell', 'Scotland', 55.7928, -3.9954, {
     8: 2.8, 9: 82,
     15: 2.5, 16: 64, 18: 1.2,
     22: 3, 23: 5, 24: 30, 25: 20,
@@ -666,7 +671,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 94, 39: 94, 40: 12,
     56: 2500, 58: 4, 59: 250,
   }),
-  mkt('uk-73', 'Edinburgh', 'Scotland', {
+  mkt('uk-73', 'Edinburgh', 'Scotland', 55.9533, -3.1883, {
     8: 3.5, 9: 79,
     15: 3.2, 16: 74, 18: 0.9,
     22: 4, 23: 20, 24: 20, 25: 10,
@@ -674,7 +679,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 100, 39: 100, 40: 9,
     56: 3500, 58: 4, 59: 300,
   }),
-  mkt('uk-74', 'Aberdeen', 'Scotland', {
+  mkt('uk-74', 'Aberdeen', 'Scotland', 57.1497, -2.0943, {
     8: 3.0, 9: 80,
     15: 2.5, 16: 70, 18: 1.1,
     22: 6, 23: 15, 24: 3, 25: 10,
@@ -682,7 +687,7 @@ export const UK_MARKETS: MarketInput[] = [
     38: 103, 39: 103, 40: 11,
     56: 1500, 58: 3, 59: 250,
   }),
-  mkt('uk-75', 'Dundee', 'Scotland', {
+  mkt('uk-75', 'Dundee', 'Scotland', 56.462, -2.9707, {
     8: 3.0, 9: 81,
     15: 2.5, 16: 66, 18: 1.0,
     22: 5, 23: 20, 24: 3, 25: 30,

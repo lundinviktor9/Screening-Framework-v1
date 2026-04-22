@@ -47,6 +47,9 @@ export interface MarketInput {
   name: string;
   region: string;
   notes: string;
+  lat: number;           // centroid latitude
+  lng: number;           // centroid longitude
+  aliases: string[];     // alternative names for location matching
   isPreFilled?: boolean; // true = seeded from public data sources
   // metricId → raw value (number) or direct score (1–5)
   values: Record<number, number | null>;
