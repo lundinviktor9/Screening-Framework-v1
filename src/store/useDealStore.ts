@@ -81,7 +81,18 @@ export const useDealStore = create<DealStore>((set, get) => ({
 
   updateDeal: (dealId, updates) => {
     set(state => ({
-      deals: state.deals.map(d => d.deal_id === dealId ? { ...d, ...updates } : d)
+      deals: state.deals.map(d => {
+        if (d.deal_id !== dealId) return d;
+        // Deep merge for extracted_fields
+        if (updates.extracted_fields) {
+          return {
+            ...d,
+            ...updates,
+            extracted_fields: { ...d.extracted_fields, ...updates.extracted_fields }
+          };
+        }
+        return { ...d, ...updates };
+      })
     }));
   },
 

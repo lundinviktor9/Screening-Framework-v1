@@ -49,37 +49,53 @@
     "updated_at": "2026-04-22T07:50:08.880109Z"
   },
   {
-    "deal_id": "494d2967236f713e",
+    "deal_id": "bef9beb3fedf43e5",
     "status": "extracted",
-    "pdf_hash": "494d2967236f713eff068beccec240d82f5b42afd8a3b0a7493f0167f2351025",
-    "source_filename": "temp_Manchester - Kayley_Industrial_Estate.pdf",
+    "pdf_hash": "bef9beb3fedf43e56abffb01513f90ddd369df098e335df875bb93beaaf66803",
+    "source_filename": "temp_Canon Industrial Park, Milton Keynes - IM.pdf",
     "extracted_fields": {
       "Type": "IM",
-      "Project Name": "Kayley Industrial Estate",
+      "Project Name": "Canon Industrial Park",
       "Country": "United Kingdom",
-      "Location": "Ashton-under-Lyne",
+      "Location": "Milton Keynes",
       "Portfolio": "No",
-      "Address": "Richmond Street",
-      "Postal code": "OL7 0AU",
-      "Year Built": "1970s+",
-      "Number of Tenants": 24,
-      "Leasable area, sq ft": 364817,
-      "Base rent incl. index, CCY/sqft": 5,
-      "NOI, CCY": 1924537,
-      "WAULT, years": 5,
-      "Economic occupancy rate, %": "94%",
-      "Yield": 7.5,
-      "Deal value, CCY": 24000000,
-      "Comment": "Highly reversionary multi-let industrial estate with immediate income and asset management opportunities."
+      "Address": "Old Wolverton Road, Wolverton",
+      "Postal code": "MK12 5NA",
+      "Year Built": "1980s-1989",
+      "Number of Tenants": 22,
+      "Leasable area, sq ft": 191971,
+      "Base rent incl. index, CCY/sqft": 10,
+      "NOI, CCY": 1868453,
+      "WAULT, years": 4,
+      "Economic occupancy rate, %": "100%",
+      "Yield": 6.25,
+      "Deal value, CCY": 28000000,
+      "Yield2": 7.5,
+      "Comment": "Highly reversionary South East industrial estate with significant quantum and rental growth potential."
     },
     "market_ids": [
-      "uk-47"
+      "uk-06"
     ],
-    "market_match_confidence": 0.85,
-    "microlocation_fit_score": 50,
-    "microlocation_narrative": "Market matched but score data unavailable.",
-    "narrative_detail": {},
-    "created_at": "2026-04-22T14:09:52.523741Z",
-    "updated_at": "2026-04-22T14:09:52.523741Z"
+    "market_match_confidence": 1.0,
+    "microlocation_fit_score": 59.8,
+    "microlocation_narrative": "uk-06 ranks strongly on Connectivity (score 75) and Labour (score 75).",
+    "narrative_detail": {
+      "uk-06": {
+        "fit_score": 59.8,
+        "narrative": "uk-06 ranks strongly on Connectivity (score 75) and Labour (score 75).",
+        "top_pillars": [
+          [
+            "Connectivity",
+            75
+          ],
+          [
+            "Labour",
+            75
+          ]
+        ]
+      }
+    },
+    "created_at": "2026-05-11T11:59:44.756422Z",
+    "updated_at": "2026-05-11T11:59:44.756422Z"
   }
 ]

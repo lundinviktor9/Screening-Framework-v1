@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDealStore, type DealRecord } from '../../store/useDealStore';
 import { DealUploadPanel } from './DealUploadPanel';
-import { DealCardList } from './DealCardList';
+import { EditableDealTable } from './EditableDealTable';
 import { DealMap } from './DealMap';
-import { DealProfileDrawer } from './DealProfileDrawer';
 import './PipelineTab.css';
 
 export function PipelineTab() {
@@ -17,11 +16,9 @@ export function PipelineTab() {
     [rawDeals, filters]
   );
 
-  const [selectedDeal, setSelectedDeal] = useState<DealRecord | null>(null);
-
   useEffect(() => {
     fetchDeals();
-  }, []);
+  }, [fetchDeals]);
 
   return (
     <div className="pipeline-container">
@@ -46,31 +43,15 @@ export function PipelineTab() {
         <div className="pipeline-table-section">
           {loading ? (
             <div className="p-8 text-center text-gray-500">Loading deals...</div>
-          ) : deals.length === 0 ? (
-            <div className="p-8 text-center text-gray-400">
-              No deals yet. Upload PDFs to get started.
-            </div>
           ) : (
-            <DealCardList
-              deals={deals}
-              selectedDeal={selectedDeal}
-              onSelectDeal={setSelectedDeal}
-            />
+            <EditableDealTable deals={deals} />
           )}
         </div>
 
         <div className="pipeline-map-section">
-          {deals.length > 0 && <DealMap deals={deals} selectedDeal={selectedDeal} />}
+          {deals.length > 0 && <DealMap deals={deals} selectedDeal={null} />}
         </div>
       </div>
-
-      {/* Drawer (slides in from right) */}
-      {selectedDeal && (
-        <DealProfileDrawer
-          deal={selectedDeal}
-          onClose={() => setSelectedDeal(null)}
-        />
-      )}
     </div>
   );
 }
