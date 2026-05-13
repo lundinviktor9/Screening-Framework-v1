@@ -20,6 +20,24 @@ from local JSON files produced by separate Python scraping scripts.
 
 ---
 
+## SESSION END PROTOCOL
+
+At the end of every meaningful work session — before the user closes Claude Code — proactively offer to update TASKS.md with a handover note.
+
+The handover update should capture:
+- What was completed this session (reference specific commits)
+- Any gotchas, bugs, or design decisions worth remembering for next time
+- The natural next task with relevant constraints
+- Updated "Last Updated" date
+
+Always show the diff before applying. After approval, commit with a clear message and offer to push.
+
+If the user closes the session without asking for a handover, that is fine — they may not be at a natural stopping point.
+
+If the user opens a session and TASKS.md "Last Updated" is more than 2 weeks old, gently note that the handover doc may be stale.
+
+---
+
 ## TECH STACK — DO NOT DEVIATE FROM THIS
 
 Frontend: React, TypeScript, Recharts, Tailwind CSS
