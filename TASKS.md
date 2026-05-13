@@ -1,18 +1,40 @@
 # TASKS — Brunswick Screening Framework
 
 ## Last Updated
-21 April 2026
+22 April 2026
 
 ## Current Status
-Application covers **75 markets** (Belfast removed v4), scored across **6 pillars
-and 72 metrics**. Newmark Q3 2025 regional data is now integrated end-to-end:
-scraped from PDF → merged into master_data.json → surfaced in map regional-zone
-layer with per-region detail panel. Live UK 10-year gilt yield pipeline built
-with BoE/DMO fallback, used to calculate `newmark_yield_spread`. Data Sources
-page shows live gilt yield card and Newmark attribution.
+
+Application covers **75 markets**, scored across 6 pillars and 72 metrics. As of 22 April, the deal pipeline is **fully operational end-to-end**: PDFs dropped into `deals_inbox/` are extracted via Claude API, matched to markets, scored for fit, and displayed in the Pipeline tab. West Craigs Industrial Estate validated against source IM with all values traceable.
+
+## Next session: pick up here
+
+**Last completed (committed):**
+- Deal pipeline working end-to-end (West Craigs extracted, validated, displayed)
+- Pipeline tab redesign — card layout per deal, all 14 fields formatted correctly
+- Map renders Mapbox pins coloured by fit score; coordinates pulled from matched market
+- Fixed dataMerger.mergeMasterData to preserve lat/lng/aliases/region on merge
+- Webpack env var injection via DefinePlugin (rotated old API key, new one in `.env`)
+
+**Next task: metric-level sensitivity drill-down on /sensitivity**
+
+The pillar weight sliders at the top of /sensitivity already exist and work. The task is to ADD a metric drill-down section BELOW them. See the prompt the user will paste at session start for the full spec.
+
+Key points:
+- Six pillar accordions, all collapsed by default
+- Each metric has a weight slider (percentages, summing to 100% within each pillar)
+- Auto-rebalance: dragging one slider proportionally adjusts others in the same pillar
+- Live top-10 ranking preview at the bottom of the page
+- This work will also fix the latent bug where per-metric weights from metrics.ts aren't applied to math — rankings will shift slightly
+
+**Key constraints for next session:**
+- DO NOT modify existing pillar weight controls
+- DO NOT modify Data Entry page
+- DO NOT modify deal pipeline / extractor
+- Metric weights as percentages within pillar, not multipliers
+- Default scenario seeds even distribution within each pillar
 
 ---
-
 ## Completed This Session
 
 ### Newmark PDF scraper (Section 1)

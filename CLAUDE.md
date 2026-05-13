@@ -41,6 +41,40 @@ No paid subscriptions, no cloud services, no backend server
 
 ---
 
+## CRITICAL GOTCHAS (READ BEFORE TOUCHING ENV VARS OR MAP)
+
+### Build tool: this is Webpack, not Vite
+- Env vars use `process.env.X` (not `import.meta.env.X`)
+- Env file is `.env` (not `.env.local`)
+- Env vars must be injected via DefinePlugin in `webpack.config.js`
+- dotenv is loaded at the top of webpack.config.js via `require('dotenv').config()`
+
+### Killing the dev server on Windows
+- `Ctrl+C` alone doesn't reliably stop webpack-dev-server
+- Use `taskkill //F //IM node.exe` if port 5173 is stuck
+
+### Mapbox token
+- Stored in `.env` as `MAPBOX_TOKEN` (no VITE_ prefix)
+- Injected to bundle via DefinePlugin
+- Free tier (50k loads/month) is far more than this project needs
+
+### FastAPI server env loading
+- `extractor/server.py` loads `extractor/.env` via python-dotenv at the very top of the file (BEFORE the docstring — keep it that way)
+- Run with `python -m uvicorn extractor.server:app --port 8787` — avoid `--reload` for env var consistency
+
+### localStorage gotcha
+- Markets are cached under key `sf_markets_v2`
+- Stale localStorage was the root cause of the (NaN, NaN) map bug — when changing market data shape, clear via `localStorage.removeItem('sf_markets_v2')` in browser console
+- `dataMerger.mergeMasterData` must preserve lat, lng, aliases, region, name, id when merging, or markers fail to render
+
+### Latent scoring bug (to be fixed during sensitivity work)
+- Per-metric `weight` defined in `metrics.ts` is NOT currently applied in `scoreMarket()` — pillar scores use simple mean
+- Will be fixed when metric-level sensitivity is built
+- Rankings will shift slightly when the fix lands; that's correct behaviour
+
+---
+
+---
 ## THE SIX PILLARS AND THEIR WEIGHTS (DEFAULT — equally-weighted)
 
 Supply          17%
@@ -59,11 +93,14 @@ read from state.
 
 ## PAGES ALREADY BUILT — DO NOT RESTRUCTURE THESE
 
-Rankings    → Table of all 76 markets with pillar scores and RAG status
-Map         → Geographic overlay of all 76 markets (Leaflet)
-Sensitivity → Pillar weight sliders that reorder markets in real time
-Dashboard   → Top market cards, radar chart, pillar bars, 60-metric heatmap
-Data Entry  → NEW — manual data entry panel (see below)
+Rankings     → Table of all 75 markets with pillar scores and RAG status
+Map          → Geographic overlay (Leaflet) of all 75 markets
+Sensitivity  → Pillar weight sliders that reorder markets in real time
+Dashboard    → Top market cards, radar chart, pillar bars, 72-metric heatmap
+Data Entry   → Manual data entry panel for commercial data (Bucket 4)
+Pipeline     → Deal extraction pipeline (PDFs → Claude API → matched markets → fit scores)
+Compare      → Side-by-side comparison of selected markets
+Data Sources → Live gilt yield card, Newmark attribution, source provenance
 
 Sidebar navigation, Export CSV, Import CSV, Add Market, 
 Reset to Defaults all exist and must be preserved.
@@ -284,19 +321,12 @@ and REGIONAL_PROXY status values — REVIEW_NEEDED counts as missing.
 
 ---
 
-## BUILD PRIORITIES — ALWAYS WORK IN THIS ORDER
+## CURRENT BUILD PRIORITIES (April 22, 2026)
 
-1. Data Entry panel (unblocks manual commercial data entry immediately)
-2. Validation and confidence flagging on all existing data
-3. Data completeness indicators in Rankings table
-4. nomis_scraper.py
-5. overpass_scraper.py
-6. environment_agency_scraper.py
-7. data_merger.py
-8. pdf_scraper.py
-9. React app reads from master_data.json
-
-Stop after each step and confirm with the user before proceeding.
+1. Metric-level sensitivity drill-down on /sensitivity page
+2. Fix microlocation_fit_score (profile_generator returns 50 fallback — needs to read scored_markets.json)
+3. Replace remaining placeholder metric data (M1-7, M10-14, M43-55, M57, M60) via Data Entry
+4. Run live gilt yield fetcher from a networked machine
 
 ---
 
