@@ -1,5 +1,5 @@
 import { METRICS, CONFIG, PILLARS } from '../data/metrics';
-import type { MarketInput, ScoredMarket, PillarScore, Pillar, RAG } from '../types';
+import type { MarketInput, ScoredMarket, PillarScore, Pillar, RAG, Scenario } from '../types';
 
 export function scoreMetric(metricId: number, value: number | null | undefined): number {
   if (value === null || value === undefined) return 0;
@@ -36,7 +36,7 @@ function getRAG(score: number): RAG {
   return 'Red';
 }
 
-export function scoreMarket(market: MarketInput): Omit<ScoredMarket, 'rank'> {
+export function scoreMarket(market: MarketInput, scenario?: Scenario): Omit<ScoredMarket, 'rank'> {
   const pillarScores: Record<Pillar, PillarScore> = {} as Record<Pillar, PillarScore>;
 
   for (const pillarDef of PILLARS) {
@@ -50,11 +50,23 @@ export function scoreMarket(market: MarketInput): Omit<ScoredMarket, 'rank'> {
       }
     }
 
-    const scored = Object.values(metricScores);
-    const avg = scored.length > 0
-      ? scored.reduce((a, b) => a + b, 0) / scored.length
-      : 0;
+    let avg = 0;
+    if (Object.keys(metricScores).length > 0) {
+      if (scenario) {
+        // Weighted average using scenario metric weights
+        const metricIds = Object.keys(metricScores).map(Number);
+        const totalWeight = metricIds.reduce((sum, id) => sum + (scenario.metricWeights[id] || 0), 0);
+        avg = totalWeight > 0
+          ? metricIds.reduce((sum, id) => sum + metricScores[id] * (scenario.metricWeights[id] || 0), 0) / totalWeight
+          : 0;
+      } else {
+        // Simple average (current behaviour)
+        const scored = Object.values(metricScores);
+        avg = scored.reduce((a, b) => a + b, 0) / scored.length;
+      }
+    }
 
+    const scored = Object.values(metricScores);
     pillarScores[pillarDef.name] = {
       pillar: pillarDef.name,
       score: avg,
@@ -86,8 +98,8 @@ export function scoreMarket(market: MarketInput): Omit<ScoredMarket, 'rank'> {
   };
 }
 
-export function rankMarkets(markets: MarketInput[]): ScoredMarket[] {
-  const scored = markets.map(m => scoreMarket(m));
+export function rankMarkets(markets: MarketInput[], scenario?: Scenario): ScoredMarket[] {
+  const scored = markets.map(m => scoreMarket(m, scenario));
   scored.sort((a, b) => b.totalScore - a.totalScore);
   return scored.map((s, i) => ({ ...s, rank: i + 1 }));
 }

@@ -71,6 +71,14 @@ export interface PillarScore {
   metricScores: Record<number, number>; // metricId → 1–5
 }
 
+export interface Scenario {
+  id: string;
+  name: string;
+  createdAt: string;
+  pillarWeights: Record<Pillar, number>;
+  metricWeights: Record<number, number>; // metricId → percentage (sums to 100 within each pillar)
+}
+
 export interface ScoredMarket {
   market: MarketInput;
   pillarScores: Record<Pillar, PillarScore>;

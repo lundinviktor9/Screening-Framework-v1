@@ -29,7 +29,13 @@
       "Bash(taskkill /IM EXCEL.EXE /F)",
       "Bash(start \"http://localhost:5173/#/pipeline\")",
       "Bash(curl -s http://localhost:8787/deals)",
-      "Bash(python3 -c \"import sys, json; deals=json.load\\(sys.stdin\\); print\\(f'API: {len\\(deals\\)} deals available'\\)\")"
+      "Bash(python3 -c \"import sys, json; deals=json.load\\(sys.stdin\\); print\\(f'API: {len\\(deals\\)} deals available'\\)\")",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(timeout 60 bash -c 'until curl -s http://localhost:5173 > /dev/null 2>&1; do sleep 1; done; echo \"Server ready\"')",
+      "Bash(taskkill /F /IM node.exe)",
+      "PowerShell(Stop-Process -Name node -Force -ErrorAction SilentlyContinue)",
+      "Bash(curl -s http://localhost:5173)"
     ],
     "additionalDirectories": [
       "\\tmp"
