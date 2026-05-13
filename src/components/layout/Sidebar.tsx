@@ -3,10 +3,10 @@ import { NavLink } from 'react-router-dom';
 const NAV = [
   { to: '/', label: 'Home', icon: '🏠' },
   { to: '/rankings', label: 'Rankings', icon: '🏆' },
+  { to: '/sensitivity', label: 'Sensitivity', icon: '🎚️' },
   { to: '/pipeline', label: 'Pipeline', icon: '📋' },
   { to: '/dashboard', label: 'Dashboard', icon: '📊' },
   { to: '/map', label: 'Map', icon: '🗺️' },
-  { to: '/sensitivity', label: 'Sensitivity', icon: '🎚️' },
   { to: '/data-entry', label: 'Data Entry', icon: '📝' },
   { to: '/sources', label: 'Data Sources', icon: '🔗' },
   { to: '/add', label: 'Add Market', icon: '➕' },

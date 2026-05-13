@@ -242,6 +242,7 @@ interface MarketStore {
   currentScenario: Scenario;
   hasUnsavedChanges: boolean;
   updateMetricWeight: (metricId: number, newPercentage: number) => void;
+  updatePillarWeights: (changedPillar: Pillar, newVal: number) => void;
   loadScenario: (scenarioId: string) => void;
   saveChanges: () => void;
   saveAsNew: (name: string) => void;
@@ -519,6 +520,32 @@ export const useMarketStore = create<MarketStore>((set, get) => {
       });
 
       const updated = { ...current, metricWeights };
+      const savedScenario = get().scenarios.find(s => s.id === updated.id);
+      const hasChanges = !savedScenario || !scenarioEqual(updated, savedScenario);
+      set({ currentScenario: updated, hasUnsavedChanges: hasChanges });
+    },
+
+    updatePillarWeights: (changedPillar, newVal) => {
+      const current = get().currentScenario;
+      const clamped = Math.max(0, Math.min(100, newVal));
+      const names = PILLARS.map(p => p.name as Pillar);
+      const old = current.pillarWeights;
+      const oldVal = old[changedPillar];
+      const delta = clamped - oldVal;
+      const othersSum = names.reduce((s, n) => n === changedPillar ? s : s + old[n], 0);
+
+      let next = { ...old, [changedPillar]: clamped };
+      if (othersSum > 0) {
+        names.filter(n => n !== changedPillar).forEach(n => {
+          next[n] = Math.max(0, old[n] - delta * (old[n] / othersSum));
+        });
+      }
+
+      // Normalize to exactly 100
+      const sum = names.reduce((s, n) => s + next[n], 0);
+      if (sum > 0) names.forEach(n => { next[n] = (next[n] / sum) * 100; });
+
+      const updated = { ...current, pillarWeights: next };
       const savedScenario = get().scenarios.find(s => s.id === updated.id);
       const hasChanges = !savedScenario || !scenarioEqual(updated, savedScenario);
       set({ currentScenario: updated, hasUnsavedChanges: hasChanges });
