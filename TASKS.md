@@ -1,11 +1,33 @@
 # TASKS — Brunswick Screening Framework
 
 ## Last Updated
-22 April 2026
+9 June 2026
 
 ## Current Status
 
 Application covers **75 markets**, scored across 6 pillars and 72 metrics. As of 22 April, the deal pipeline is **fully operational end-to-end**: PDFs dropped into `deals_inbox/` are extracted via Claude API, matched to markets, scored for fit, and displayed in the Pipeline tab. West Craigs Industrial Estate validated against source IM with all values traceable.
+
+## MLI Underwrite integration (started 2026-06-09)
+
+New workstream: plug the MLI deep-underwrite engine into the pipeline as a downstream stage
+(tenancy schedule in -> populated PGIM model + IRR/MOIC/CoC -> stamped onto `deals.json[deal_id].underwrite`).
+Separate from the React/sensitivity work below; does NOT touch the existing extractor/pipeline.
+
+**Done this session (schemas + contract slice):**
+- [x] `underwrite/schemas/tenancy_schedule.schema.json` - one row per unit, 32 fields, 7 judgement-call flags
+- [x] `underwrite/schemas/assumptions.schema.json` - 18 deal-level dials with house defaults + flags
+- [x] `underwrite/INTERFACE.md` - engine<->framework contract grounded in the real `extractor/` + `deals.json`
+- [x] `underwrite/README.md`
+- Decision: vendor the engine into `underwrite/engine/` (pinned `MLI v21 BASE` + header-driven injector); engine is built/proven in `C:\MLI`.
+
+**Next slice:**
+- [ ] Vendor `underwrite/engine/` (pinned base + `inject_deal_v21.py` + `verify.py` + normalisers + `run_underwrite.py`)
+- [ ] `underwrite/adapter.py` exposing `run_mode_a` / `run_mode_b` per INTERFACE.md
+- [ ] Server endpoints `POST /underwrite/{deal_id}` (Mode A) + `/run` (Mode B); React "Underwriting" panel
+- [ ] Prove Mode A end-to-end on West Craig (already deal `be133cc37e1816b9`)
+- Caveat to honour: headless LibreOffice recalc masks some Excel errors; compute `workbook_error_cells` with v21 verify logic, final Excel Ctrl+Alt+F9 before showing IC numbers.
+
+---
 
 ## Next session: pick up here
 
@@ -153,31 +175,4 @@ Total: **2,254 verified + estimated metric values** across 75 markets.
    pass OR user-provided baseline.
 2. **Inner vs Greater London** — matrix has a single `uk-01 Greater London`
    market; Inner/Greater split is map-only. Inner London receives the same
-   Greater London cascade values but displays its own prime-rent range
-   (from Park Royal, Inner London micro-locations) in the region panel.
-3. **Wales markets** — 3 markets (Cardiff, Newport, Swansea) get Newmark
-   Wales cascade values. 3 out of ~9-12 Newmark regions have ≥ 5 markets;
-   the rest have fewer.
-4. **Pre-filled placeholder data** — M1-M7, M10-M14, M43-M50, M55-M60
-   in `src/data/ukMarkets.ts` still contain hallucinated values from a
-   previous Claude session. Data Entry panel is the intended replacement.
-5. **M37 (economic activity)** — all 75 markets null; NOMIS dataset
-   NM_17_5 returns empty queries.
-
----
-
-## Architecture Decisions (this session)
-
-- **Newmark metric IDs**: M41/M42 redefined in-place (index → £psf) with
-  store migration to clear legacy values. Added M65-M72 for new metrics.
-- **Yield spread**: calculated in merger, not scraper, so updating the gilt
-  yield cache automatically refreshes all spread values on next merge run.
-- **Chart-approximated values** (vacancy, reversion): carry
-  `extraction_method: "chart_approximation"` + `accuracy_note`. UI shows
-  with `~` tilde prefix.
-- **Regional zones default ON**: primary map layer is now yield-coloured
-  polygons, not score dots. Dots and LAD choropleth are opt-in layers.
-- **Inner London**: treated as a subset of Greater London for scoring;
-  map-only visual split via inner_london_lad_codes list.
-- **Belfast removed** (v4, 76→75): NI gaps in VOA + NOMIS BRES made data
-  unreliable.
+   Greater London casc
