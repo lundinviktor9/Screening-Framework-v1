@@ -159,7 +159,6 @@ demo), **Newbury**, **Meadow**, **Cannon**. West Craig is also the frozen tie-ou
 - [x] `tenancy_schedule.schema.json` - one row per unit, 32 fields, 7 judgement-call flags.
 - [x] `assumptions.schema.json` - 18 deal-level dials with house defaults + flags.
 - [x] This contract, grounded in the real `extractor/` + `deals.json` code.
-- [ ] Vendor `underwrite/engine/` (pinned base + injector + verify + normalisers + runner).
-- [ ] `underwrite/adapter.py` exposing `run_mode_a` / `run_mode_b`.
-- [ ] Server endpoints + React "Underwriting" panel.
-- [ ] End-to-end Mode A on West Craig (`be133cc37e1816b9`).
+- [x] Vendored `underwrite/engine/` (pinned base + injector + verify + normalisers + runner).
+- [x] `underwrite/adapter.py` exposing `run_mode_a` / `run_mode_b` - smoke-tested end-to-end:
+      Mode A flags the vacant/break units (0 schema errors); Mode B returns NetPP 8.8

@@ -1,25 +1,23 @@
 """
 underwrite/adapter.py - framework-facing wrapper around the vendored MLI engine.
 
-Exposes the two entry points named in INTERFACE.md:
-
-    run_mode_a(deal_id, normalised_rr_xlsx, rr_sheet, ...) -> Mode A dict (parse + validate + flag)
+Entry points (see INTERFACE.md):
+    run_mode_a(deal_id, normalised_rr_xlsx, rr_sheet, ...) -> Mode A (parse + validate + flag)
     run_mode_b(deal_id, normalised_rr_xlsx, rr_sheet, asset, region, entry, assumptions=None)
-        -> Mode B dict (populate model + headless recalc + verify + returns)
+        -> Mode B (populate model + headless recalc + verify + returns)
 
-Mode B reuses the proven pipeline: copy the normalised RR sheet into a copy of the PINNED base
--> inject_deal_v21 (header-driven) -> headless LibreOffice recalc -> verify.py -> extract returns.
+Mode B pipeline: copy the normalised RR sheet into a copy of the PINNED base ->
+inject_deal_v21 (header-driven) -> apply assumption dials -> headless LibreOffice recalc ->
+verify -> extract returns.
 
-DEPENDENCIES: openpyxl; LibreOffice (`soffice`) on PATH for Mode B recalc. Mode A needs neither
-the recalc nor an API key (the LLM 'classify' refinement is a future hook - see classify_flags()).
+DEPENDENCIES: openpyxl; LibreOffice (`soffice`) on PATH for Mode B recalc. Mode A needs neither.
 
 NOTE (Excel-safety): headless LibreOffice MASKS some Excel errors (coerces text to 0 inside
-array formulas). `checks.workbook_error_cells` is computed with the v21 verify logic; a final
-Excel Ctrl+Alt+F9 review remains the gold standard before any number reaches an IC.
+array formulas). `checks.workbook_error_cells` uses the v21 verify logic; a final Excel
+Ctrl+Alt+F9 review remains the gold standard before any number reaches an IC.
 """
 from __future__ import annotations
 import json
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -54,8 +52,7 @@ class UnderwriteError(RuntimeError):
 
 def _recalc(xlsx_in: Path, out_dir: Path, profile: Path, timeout: int = 240) -> Path:
     """Force a full LibreOffice recalc-on-load and re-save (faithful round-trip)."""
-    profile.mkdir(parents=True, exist_ok=True)
-    (profile / "user").mkdir(exist_ok=True)
+    (profile / "user").mkdir(parents=True, exist_ok=True)
     reg = profile / "user" / "registrymodifications.xcu"
     if not reg.exists():
         reg.write_text(
@@ -132,6 +129,45 @@ def _anchor_tieout_ok(prepared_model: Path, profile: Path, workdir: Path) -> boo
     return isinstance(d16, (int, float)) and abs(d16 - ANCHOR_TIEOUT) < 0.01
 
 
+# ---------------------------------------------------------------- assumptions
+
+def _apply_assumptions(wb, a: Optional[Dict[str, Any]], rr_sheet: str) -> List[str]:
+    """Write deal-level dials onto the injected model. Returns notes for any that couldn't apply.
+    Cells: hold_years->CFO Q26; exit_yield_shift->Q27; rental_growth->GA D49; ltv->CFO Q37;
+    scenario (1-4)->CFO Q35. An absolute exit_yield maps to a Q27 shift only when the schedule's
+    exit yields are uniform (else it cannot map to a single shift and is flagged)."""
+    notes: List[str] = []
+    if not a:
+        return notes
+    cfo = wb["Cash Flow Output"]; ga = wb["Global Assumptions"]
+    if a.get("hold_years") is not None:
+        cfo["Q26"] = a["hold_years"]                      # D8/D9 (exit) cascade off Q26
+    if a.get("exit_yield_shift") is not None:
+        cfo["Q27"] = a["exit_yield_shift"]
+    elif a.get("exit_yield") is not None:
+        ys = set()
+        rr = wb[rr_sheet]
+        for r in range(2, rr.max_row + 1):
+            v = rr.cell(r, cix("I")).value
+            if isinstance(v, (int, float)):
+                ys.add(round(v, 6))
+        if len(ys) == 1:
+            cfo["Q27"] = round(a["exit_yield"] - ys.pop(), 6)
+        else:
+            notes.append(f"exit_yield not applied: schedule exit yields are non-uniform "
+                         f"({len(ys)} distinct); set exit_yield_shift instead")
+    if a.get("rental_growth") is not None:
+        ga["D49"] = a["rental_growth"]
+    if a.get("ltv") is not None:
+        cfo["Q37"] = a["ltv"]
+    if a.get("scenario") is not None:                    # 1-4 (Base UK SPV, ...)
+        cfo["Q35"] = a["scenario"]
+    for k in ("debt_rate", "tax_scenario", "exit_basis"):
+        if a.get(k) is not None:
+            notes.append(f"{k} not yet wired into Mode B (documented TODO)")
+    return notes
+
+
 # ---------------------------------------------------------------- Mode B
 
 def run_mode_b(
@@ -162,8 +198,12 @@ def run_mode_b(
          "--asset", asset, "--region", region, "--entry", entry, "--out", str(injected)],
         check=True, capture_output=True, timeout=180,
     )
-    # TODO: apply `assumptions` overrides (exit_yield, hold_years via CFO Q26/Q27, ltv, etc.)
-    #       onto `injected` before recalc. House defaults from the base apply until then.
+
+    assumption_notes: List[str] = []
+    if assumptions:
+        wb = openpyxl.load_workbook(injected)
+        assumption_notes = _apply_assumptions(wb, assumptions, rr_sheet)
+        wb.save(injected)   # the LibreOffice recalc below is the faithful round-trip
 
     recalced = _recalc(injected, work / "recalc_out", profile)
     returns = _read_returns(recalced)
@@ -181,13 +221,14 @@ def run_mode_b(
         "model_xlsx": str(recalced),
         "returns": returns,
         "checks": checks,
+        "assumption_notes": assumption_notes,
     }
 
 
 # ---------------------------------------------------------------- Mode A
 
-# deterministic signals -> flags (LLM 'classify' refinement is a future hook)
 def classify_flags(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Deterministic signal -> flag. The LLM 'classify' refinement is a future hook."""
     flags: List[Dict[str, Any]] = []
     for r in rows:
         unit = r.get("Unit Number") or r.get("E") or "?"
@@ -197,7 +238,7 @@ def classify_flags(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             flags.append({"unit": unit, "signal": "vacant@entry",
                           "treatment": "capitalise guarantee/headline rent; re-let at void/RF defaults",
                           "needs_signoff": True})
-        if "under offer" in tenant or "uo" == tenant:
+        if "under offer" in tenant or tenant == "uo":
             flags.append({"unit": unit, "signal": "under_offer",
                           "treatment": "let from agreed start on agreed rent/term",
                           "needs_signoff": True})
@@ -215,6 +256,7 @@ def run_mode_a(
     schema_dir: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Parse + validate the normalised RR against the schema and surface judgement-call flags."""
+    import re as _re
     sdir = Path(schema_dir) if schema_dir else Path(__file__).parent / "schemas"
     schema = json.loads((sdir / "tenancy_schedule.schema.json").read_text(encoding="utf-8"))
     required = [c["name"] for c in schema["columns"] if c.get("required")]
@@ -228,11 +270,8 @@ def run_mode_a(
             continue
         rows.append({h: s.cell(r, col).value for h, col in headers.items() if h})
 
-    # RR uses the field-dictionary header names (which contain currency symbols and varied
-    # spacing); the schema names avoid them. Compare on a normalised key (alphanumerics only)
-    # so "Passing Rent (pa)" matches "Passing Rent (GBP pa)". The normaliser owns full alias
-    # resolution; this is only a light presence check.
-    import re as _re
+    # RR headers contain currency symbols / varied spacing; schema names avoid them. Compare on a
+    # normalised key (alphanumerics only) so "Passing Rent (pa)" matches "Passing Rent (GBP pa)".
     def _norm(x: str) -> str:
         return _re.sub(r"[^a-z0-9]", "", str(x).lower())
     have = {_norm(h) for h in headers}
@@ -255,4 +294,10 @@ if __name__ == "__main__":  # tiny CLI for manual runs
     ap.add_argument("--deal-id", required=True)
     ap.add_argument("--rr-xlsx", required=True)
     ap.add_argument("--rr-sheet", required=True)
-    ap.add_argument("--asset"); ap.add_argument("--region"); ap.add_a
+    ap.add_argument("--asset"); ap.add_argument("--region"); ap.add_argument("--entry")
+    a = ap.parse_args()
+    if a.mode == "A":
+        print(json.dumps(run_mode_a(a.deal_id, a.rr_xlsx, a.rr_sheet), indent=2, default=str))
+    else:
+        print(json.dumps(run_mode_b(a.deal_id, a.rr_xlsx, a.rr_sheet, a.asset, a.region, a.entry),
+                         indent=2, default=str))
