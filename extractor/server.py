@@ -42,6 +42,7 @@ from extractor.normalizer import normalize_inbound_uk_row
 from extractor.market_matcher import MarketMatcher
 from extractor.profile_generator import ProfileGenerator
 from extractor.persistence import DealStore, create_deal_record, DealStore
+from extractor.underwrite_routes import make_underwrite_router
 
 # Initialize FastAPI
 app = FastAPI(
@@ -82,6 +83,9 @@ def get_pillar_scores(market_id: str) -> Dict[str, float]:
 matcher = MarketMatcher(str(MARKETS_CONFIG), str(POSTCODE_MAP))
 generator = ProfileGenerator(str(STRATEGY_WEIGHTS))
 store = DealStore(str(DEALS_JSON))
+
+# Underwrite stage (Mode A/B) — shares the single DealStore instance.
+app.include_router(make_underwrite_router(store))
 
 # PDF storage (for /pdf/{deal_id} endpoint)
 PDFS_DIR = REPO_ROOT / "extractor" / "pdfs_ingested"

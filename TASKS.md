@@ -175,4 +175,31 @@ Total: **2,254 verified + estimated metric values** across 75 markets.
    pass OR user-provided baseline.
 2. **Inner vs Greater London** — matrix has a single `uk-01 Greater London`
    market; Inner/Greater split is map-only. Inner London receives the same
-   Greater London casc
+   Greater London cascade values but displays its own prime-rent range
+   (from Park Royal, Inner London micro-locations) in the region panel.
+3. **Wales markets** — 3 markets (Cardiff, Newport, Swansea) get Newmark
+   Wales cascade values. 3 out of ~9-12 Newmark regions have ≥ 5 markets;
+   the rest have fewer.
+4. **Pre-filled placeholder data** — M1-M7, M10-M14, M43-M50, M55-M60
+   in `src/data/ukMarkets.ts` still contain hallucinated values from a
+   previous Claude session. Data Entry panel is the intended replacement.
+5. **M37 (economic activity)** — all 75 markets null; NOMIS dataset
+   NM_17_5 returns empty queries.
+
+---
+
+## Architecture Decisions (this session)
+
+- **Newmark metric IDs**: M41/M42 redefined in-place (index → £psf) with
+  store migration to clear legacy values. Added M65-M72 for new metrics.
+- **Yield spread**: calculated in merger, not scraper, so updating the gilt
+  yield cache automatically refreshes all spread values on next merge run.
+- **Chart-approximated values** (vacancy, reversion): carry
+  `extraction_method: "chart_approximation"` + `accuracy_note`. UI shows
+  with `~` tilde prefix.
+- **Regional zones default ON**: primary map layer is now yield-coloured
+  polygons, not score dots. Dots and LAD choropleth are opt-in layers.
+- **Inner London**: treated as a subset of Greater London for scoring;
+  map-only visual split via inner_london_lad_codes list.
+- **Belfast removed** (v4, 76→75): NI gaps in VOA + NOMIS BRES made data
+  unreliable.
