@@ -27,6 +27,30 @@ Separate from the React/sensitivity work below; does NOT touch the existing extr
 - [ ] Prove Mode A end-to-end on West Craig (already deal `be133cc37e1816b9`)
 - Caveat to honour: headless LibreOffice recalc masks some Excel errors; compute `workbook_error_cells` with v21 verify logic, final Excel Ctrl+Alt+F9 before showing IC numbers.
 
+### Session handover — 2026-06-09 (app wiring + hardening + eval)
+
+**Done this session (UNCOMMITTED in working tree — commit/push from desktop, see caveat):**
+- [x] FastAPI endpoints in `extractor/underwrite_routes.py` (factory `make_underwrite_router(store)`, wired into `server.py`): `POST /underwrite/{deal_id}` (upload→normalise→Mode A), `/confirm-mapping`, `/run` (Mode B), `GET /underwrite/{deal_id}` + `/model`. HITL gate enforced (`/run` 409s unless `mapping_signed_off` && `flags_signed_off`); no-false-precision (`display_returns` only when `checks.pass`); outputs to `extractor/underwrite_runs/` (env `UNDERWRITE_OUT_DIR`, OneDrive-safe); routes read-merge-write the `underwrite` sub-object (DealStore.update is shallow).
+- [x] Entry-yield dial (`adapter.py` `_apply_entry_yield`): written to RR col H BEFORE injection (the injector reads H per unit; `_apply_assumptions` runs post-inject, too late). Proven: schedule→NetPP £6.885m vs entry_yield 5%→£9.983m.
+- [x] Mapping hardening (`normalise_auto.py`): preview 8→20 rows (Newbury header is row 11 — old window missed it), prompt upgraded (header-not-row-1 / multi-line / psf-only / text-dates / footnotes), deterministic known-broker fast path (`find_header_row` + `KNOWN_LAYOUTS` + `detect_known_mapping`, registered: `newbury_ts_new`).
+- [x] React `UnderwritingPanel.tsx` on the deal drawer: upload → mapping + 3 sample rows + flags + per-area sign-off → assumptions form → Run → returns card + checks badge + model download. `DealRecord.underwrite` typed.
+- [x] EVAL (auto/hand normalise → Mode B), all `checks.pass` / anchor tie-out OK / 0 error cells:
+      - Newbury (generic fast path, raw "Newbury TS NEW"): 21/21 units, deterministic cols match; Unlev IRR 15.7%.
+      - Cannon (hand adapter): 28/28 deterministic vs trusted "Cannon RR"; Unlev IRR 15.2%.
+      - Meadow (hand adapter, 3-estate portfolio): 39/39 deterministic vs trusted "DealRR"; Unlev IRR 18.0%.
+      - Only Entry Yield differs vs trusted (the pricing override) — expected; that's the entry-yield dial.
+
+**Gotchas learned:**
+- The `Dokument` repo is OneDrive-synced: the Linux sandbox mount intermittently serves TRUNCATED copies of host-edited files (and `git` in the sandbox sees stale state). Verified by rebuilding from `git archive` + `/tmp`. DO NOT `git add`/commit from a sandbox — commit from the desktop where files are whole.
+- Several `C:\MLI` workbooks are OneDrive-dehydrated ("File is not a zip"): Newbury v21/v15/Compare. Use materialised copies (Cannon v6, Meadow Portfolio, Newbury v21 (recovered)).
+- Live `propose_mapping` (Anthropic) can't be called from the sandbox (TLS-intercepting egress); runs fine from the server. The preview/prompt fix that feeds it is verified.
+- Generic auto-path maps COLUMNS only; broker-specific encodings (Cannon Y/N breaks, guarantee-from-comments, under-offer) need the hand adapters — that's the known-broker fast path's purpose.
+
+**Next:**
+- [ ] Commit + push the 7 files above from desktop; run `python -c "import extractor.server"` and the eval scripts locally.
+- [ ] Add Cannon/Meadow to the known-broker fast path by DISPATCHING to the hand adapters (`normalise_cannon.py`/`normalise_meadow.py`), not generic column maps (their judgement encodings differ).
+- [ ] Final Excel Ctrl+Alt+F9 pass on a populated model before any IC number (headless masks some errors).
+
 ---
 
 ## Next session: pick up here

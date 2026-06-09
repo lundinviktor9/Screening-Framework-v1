@@ -11,6 +11,13 @@ export interface DealRecord {
   microlocation_fit_score: number;
   microlocation_narrative: string;
   extraction_errors?: string[];
+  underwrite?: {
+    status?: string;
+    returns?: Record<string, number> | null;
+    checks?: { pass: boolean; anchor_tieout_ok: boolean; workbook_error_cells: number } | null;
+    display_returns?: boolean;
+    [k: string]: any;
+  } | null;
   created_at?: string;
   updated_at?: string;
 }

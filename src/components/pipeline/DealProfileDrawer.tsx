@@ -1,6 +1,7 @@
 import { type DealRecord, useDealStore } from '../../store/useDealStore';
 import { useMarketStore } from '../../store/marketStore';
 import { UK_MARKETS } from '../../data/ukMarkets';
+import { UnderwritingPanel } from './UnderwritingPanel';
 
 interface DealProfileDrawerProps {
   deal: DealRecord;
@@ -156,6 +157,9 @@ export function DealProfileDrawer({ deal, onClose }: DealProfileDrawerProps) {
             </div>
           </div>
         </div>
+
+        {/* Underwriting (Mode A/B) */}
+        <UnderwritingPanel dealId={deal.deal_id} />
 
         {/* Errors (if any) */}
         {deal.extraction_errors && deal.extraction_errors.length > 0 && (

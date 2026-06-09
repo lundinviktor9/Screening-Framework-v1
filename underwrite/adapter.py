@@ -168,6 +168,33 @@ def _apply_assumptions(wb, a: Optional[Dict[str, Any]], rr_sheet: str) -> List[s
     return notes
 
 
+def _apply_entry_yield(prepared: Path, rr_sheet: str, a: Optional[Dict[str, Any]]) -> List[str]:
+    """Apply the entry-yield pricing dial BEFORE injection.
+
+    The injector references `RR!H{row}` per unit for Entry Yield (NIY), so an override has to be
+    written into column H of the RR sheet in the *prepared* base, ahead of inject_deal_v21.
+    (It cannot live in _apply_assumptions, which runs on the model AFTER those refs resolve.)
+    A single `entry_yield` is applied uniformly to every unit; leave it null to keep the
+    per-unit schedule yields."""
+    notes: List[str] = []
+    if not a or a.get("entry_yield") is None:
+        return notes
+    ey = float(a["entry_yield"])
+    wb = openpyxl.load_workbook(prepared)
+    if rr_sheet not in wb.sheetnames:
+        return [f"entry_yield not applied: RR sheet {rr_sheet!r} missing from prepared base"]
+    rr = wb[rr_sheet]
+    n = 0
+    r = 2
+    while rr.cell(r, cix("E")).value not in (None, ""):   # E = Unit Number; stop at first blank
+        rr.cell(r, cix("H")).value = ey
+        n += 1
+        r += 1
+    wb.save(prepared)
+    notes.append(f"entry_yield={ey} applied uniformly to {n} unit(s) (RR col H, pre-injection)")
+    return notes
+
+
 # ---------------------------------------------------------------- Mode B
 
 def run_mode_b(
@@ -192,6 +219,9 @@ def run_mode_b(
     prepared = work / "prepared_base.xlsx"
     _copy_rr_into_base(base_p, Path(normalised_rr_xlsx), rr_sheet, prepared)
 
+    # Entry-yield pricing dial must be stamped onto RR col H before injection (see helper).
+    entry_yield_notes = _apply_entry_yield(prepared, rr_sheet, assumptions)
+
     injected = work / "model_injected.xlsx"
     subprocess.run(
         [sys.executable, str(INJECTOR), "--base", str(prepared), "--rr-sheet", rr_sheet,
@@ -199,10 +229,10 @@ def run_mode_b(
         check=True, capture_output=True, timeout=180,
     )
 
-    assumption_notes: List[str] = []
+    assumption_notes: List[str] = list(entry_yield_notes)
     if assumptions:
         wb = openpyxl.load_workbook(injected)
-        assumption_notes = _apply_assumptions(wb, assumptions, rr_sheet)
+        assumption_notes += _apply_assumptions(wb, assumptions, rr_sheet)
         wb.save(injected)   # the LibreOffice recalc below is the faithful round-trip
 
     recalced = _recalc(injected, work / "recalc_out", profile)
