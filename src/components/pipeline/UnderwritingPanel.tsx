@@ -60,6 +60,9 @@ export function UnderwritingPanel({ dealId }: Props) {
 
   async function handleRun() {
     if (!entryDate) { setErr('Entry date is required.'); return; }
+    if (!mappingOk) { setErr('Column mapping must be reviewed & checked.'); return; }
+    if (!flagsOk) { setErr('Judgement flags must be reviewed & resolved.'); return; }
+
     setBusy(true); setErr(null);
     try {
       const num = (s: string) => (s.trim() === '' ? null : Number(s));
@@ -79,7 +82,10 @@ export function UnderwritingPanel({ dealId }: Props) {
           analyst: analyst || null, note: changeNote || null,
         }),
       });
-      if (!r.ok) throw new Error((await r.json()).detail || 'Run failed');
+      if (!r.ok) {
+        const errData = await r.json();
+        throw new Error(errData.detail || `Server error (${r.status}): Run failed`);
+      }
       // refetch the full block so history/baseline render
       const fresh = await fetch(`${API_BASE}/underwrite/${dealId}`).then(x => x.json());
       setBlock(fresh); setChangeNote('');
@@ -104,7 +110,10 @@ export function UnderwritingPanel({ dealId }: Props) {
         </label>
       </div>
 
-      {err && <div className="mt-2 bg-red-50 border border-red-200 rounded p-2 text-xs text-red-700">{err}</div>}
+      {err && <div className="mt-2 bg-red-50 border border-red-300 rounded p-3 text-xs text-red-800 font-medium">
+        <div>❌ Error: {err}</div>
+        <div className="mt-1 text-red-700 text-xs">Check: Is the extractor running? (<code className="bg-red-100 px-1">npm run extractor</code>) Is LibreOffice installed? (<code className="bg-red-100 px-1">soffice --version</code>)</div>
+      </div>}
 
       {hasUpload && (
         <div className="mt-3 space-y-4">
@@ -189,10 +198,35 @@ export function UnderwritingPanel({ dealId }: Props) {
             <textarea value={changeNote} onChange={e => setChangeNote(e.target.value)} rows={2} className="w-full border rounded px-1 py-0.5 text-xs" />
           </Field>
 
-          <button onClick={handleRun} disabled={busy || !mappingOk || !flagsOk || !entryDate}
-            className="w-full px-3 py-2 rounded-lg bg-blue-600 text-white font-medium text-sm disabled:bg-gray-300 disabled:cursor-not-allowed">
-            {busy ? 'Running…' : 'Run underwrite'}
-          </button>
+          {/* Run button with helper text for disabled state */}
+          <div>
+            <button onClick={handleRun} disabled={busy || !mappingOk || !flagsOk || !entryDate}
+              className={`w-full px-3 py-2 rounded-lg font-medium text-sm transition-all ${
+                busy || !mappingOk || !flagsOk || !entryDate
+                  ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
+              title={!mappingOk ? 'Check mapping reviewed & correct' :
+                     !flagsOk ? 'Check flags reviewed & resolved' :
+                     !entryDate ? 'Entry date is required' :
+                     ''}
+            >
+              {busy ? '⏳ Running (this can take ~30s, LibreOffice is recalculating)…' : 'Run underwrite'}
+            </button>
+            {!busy && (
+              <div className="mt-2 text-xs text-gray-600 space-y-1">
+                {!mappingOk && <div className="flex items-center gap-1">
+                  <span className="text-amber-600">•</span> Check <span className="font-semibold">mapping reviewed &amp; correct</span>
+                </div>}
+                {!flagsOk && <div className="flex items-center gap-1">
+                  <span className="text-amber-600">•</span> Check <span className="font-semibold">flags reviewed &amp; resolved</span>
+                </div>}
+                {!entryDate && <div className="flex items-center gap-1">
+                  <span className="text-amber-600">•</span> Set <span className="font-semibold">Entry date *</span>
+                </div>}
+              </div>
+            )}
+          </div>
 
           {checks && !checks.pass && (
             <div className="bg-red-50 border border-red-200 rounded p-2 text-xs text-red-700">

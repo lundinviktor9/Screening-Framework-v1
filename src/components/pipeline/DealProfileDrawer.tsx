@@ -8,6 +8,27 @@ interface DealProfileDrawerProps {
   onClose: () => void;
 }
 
+const formatCurrency = (val: any) => {
+  if (val === null || val === undefined || val === '') return '—';
+  const n = Number(val);
+  if (isNaN(n)) return val;
+  return n.toLocaleString('en-GB', { maximumFractionDigits: 0 });
+};
+
+const formatNumber = (val: any) => {
+  if (val === null || val === undefined || val === '') return '—';
+  const n = Number(val);
+  if (isNaN(n)) return val;
+  return n.toLocaleString('en-GB', { maximumFractionDigits: 0 });
+};
+
+const formatPercent = (val: any) => {
+  if (val === null || val === undefined || val === '') return '—';
+  const n = Number(val);
+  if (isNaN(n)) return val;
+  return `${n.toFixed(2)}%`;
+};
+
 export function DealProfileDrawer({ deal, onClose }: DealProfileDrawerProps) {
   const markets = useMarketStore(s => s.markets);
   const overrideMarket = useDealStore(s => s.overrideMarket);
@@ -123,22 +144,22 @@ export function DealProfileDrawer({ deal, onClose }: DealProfileDrawerProps) {
             Key Financials
           </label>
           <div className="mt-2 grid grid-cols-2 gap-3">
-            {[
-              ['NIY', 'Yield', '%'],
-              ['RY', 'Yield2', '%'],
-              ['Deal Value', 'Deal value, CCY', 'GBP'],
-              ['WAULT', 'WAULT, years', 'yrs']
-            ].map(([label, field, unit]) => (
-              <div key={label} className="text-sm">
-                <div className="text-xs text-gray-600">{label}</div>
-                <div className="font-semibold">
-                  {deal.extracted_fields?.[field as keyof typeof deal.extracted_fields]?.toFixed?.(2) ||
-                    deal.extracted_fields?.[field as keyof typeof deal.extracted_fields] ||
-                    '—'}
-                  {unit && <span className="text-xs text-gray-500"> {unit}</span>}
-                </div>
-              </div>
-            ))}
+            <div className="text-sm">
+              <div className="text-xs text-gray-600">NIY</div>
+              <div className="font-semibold">{formatPercent(deal.extracted_fields?.['Yield'])}</div>
+            </div>
+            <div className="text-sm">
+              <div className="text-xs text-gray-600">RY</div>
+              <div className="font-semibold">{formatPercent(deal.extracted_fields?.['Yield2'])}</div>
+            </div>
+            <div className="text-sm">
+              <div className="text-xs text-gray-600">Deal Value</div>
+              <div className="font-semibold">£{formatCurrency(deal.extracted_fields?.['Deal value, CCY'])}</div>
+            </div>
+            <div className="text-sm">
+              <div className="text-xs text-gray-600">WAULT</div>
+              <div className="font-semibold">{formatNumber(deal.extracted_fields?.['WAULT, years'])} yrs</div>
+            </div>
           </div>
         </div>
 
@@ -147,7 +168,7 @@ export function DealProfileDrawer({ deal, onClose }: DealProfileDrawerProps) {
           <div>
             <label className="text-xs font-semibold text-gray-600 uppercase">Occupancy</label>
             <div className="mt-1 font-semibold">
-              {deal.extracted_fields?.['Economic occupancy rate, %'] || '—'}
+              {formatPercent(deal.extracted_fields?.['Economic occupancy rate, %'])}
             </div>
           </div>
           <div>

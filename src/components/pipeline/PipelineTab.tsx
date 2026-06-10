@@ -3,6 +3,7 @@ import { useDealStore, type DealRecord } from '../../store/useDealStore';
 import { DealUploadPanel } from './DealUploadPanel';
 import { EditableDealTable } from './EditableDealTable';
 import { DealMap } from './DealMap';
+import { DealProfileDrawer } from './DealProfileDrawer';
 import './PipelineTab.css';
 
 export function PipelineTab() {
@@ -10,6 +11,7 @@ export function PipelineTab() {
   const filters = useDealStore(s => s.filters);
   const loading = useDealStore(s => s.loading);
   const fetchDeals = useDealStore(s => s.fetchDeals);
+  const [selectedDeal, setSelectedDeal] = useState<DealRecord | null>(null);
 
   const deals = useMemo(
     () => useDealStore.getState().getFilteredDeals(),
@@ -44,7 +46,7 @@ export function PipelineTab() {
           {loading ? (
             <div className="p-8 text-center text-gray-500">Loading deals...</div>
           ) : (
-            <EditableDealTable deals={deals} />
+            <EditableDealTable deals={deals} onOpenDeal={setSelectedDeal} />
           )}
         </div>
 
@@ -52,6 +54,11 @@ export function PipelineTab() {
           {deals.length > 0 && <DealMap deals={deals} selectedDeal={null} />}
         </div>
       </div>
+
+      {/* Deal detail + Underwriting drawer */}
+      {selectedDeal && (
+        <DealProfileDrawer deal={selectedDeal} onClose={() => setSelectedDeal(null)} />
+      )}
     </div>
   );
 }

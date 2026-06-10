@@ -11,7 +11,7 @@ interface EditingCell {
   field: string;
 }
 
-export function EditableDealTable({ deals }: { deals: DealRecord[] }) {
+export function EditableDealTable({ deals, onOpenDeal }: { deals: DealRecord[]; onOpenDeal?: (deal: DealRecord) => void }) {
   const [editedDeals, setEditedDeals] = useState<EditableDeals>({});
   const [hasChanges, setHasChanges] = useState(false);
   const [newDealCounter, setNewDealCounter] = useState(0);
@@ -177,7 +177,7 @@ export function EditableDealTable({ deals }: { deals: DealRecord[] }) {
             <col style={{width: '65px'}} />
             <col style={{width: '70px'}} />
             <col style={{width: '320px'}} />
-            <col style={{width: '60px'}} />
+            <col style={{width: '140px'}} />
           </colgroup>
           <thead className="sticky top-0 z-10">
             <tr className="bg-gray-700 text-white">
@@ -333,10 +333,18 @@ export function EditableDealTable({ deals }: { deals: DealRecord[] }) {
                 </td>
 
                 {/* Actions */}
-                <td className="px-2 py-1 border-b border-gray-200 text-center">
+                <td className="px-2 py-1 border-b border-gray-200 text-center whitespace-nowrap">
+                  {onOpenDeal && (
+                    <button
+                      onClick={() => onOpenDeal(deal)}
+                      className="px-2 py-0.5 text-blue-600 hover:bg-blue-50 rounded font-medium text-xs"
+                    >
+                      Underwrite
+                    </button>
+                  )}
                   <button
                     onClick={() => handleDelete(deal.deal_id)}
-                    className="px-2 py-0.5 text-red-600 hover:bg-red-50 rounded font-medium text-xs whitespace-nowrap"
+                    className="px-2 py-0.5 text-red-600 hover:bg-red-50 rounded font-medium text-xs"
                   >
                     Delete
                   </button>

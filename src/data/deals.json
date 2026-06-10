@@ -96,6 +96,155 @@
       }
     },
     "created_at": "2026-05-11T11:59:44.756422Z",
-    "updated_at": "2026-05-11T11:59:44.756422Z"
+    "updated_at": "2026-06-10T09:53:03.077561Z",
+    "underwrite": {
+      "status": "flagged",
+      "asset": "Canon Industrial Park",
+      "region": "Milton Keynes",
+      "raw_path": "C:\\Screening Framework\\extractor\\underwrite_runs\\bef9beb3fedf43e5\\raw_cannon TS.xlsx",
+      "rr_xlsx": "C:\\Screening Framework\\extractor\\underwrite_runs\\bef9beb3fedf43e5\\canonical_rr.xlsx",
+      "rr_sheet": "DealRR",
+      "mapping": {
+        "_source": "hand:cannon",
+        "sheet": "Cannon Ind."
+      },
+      "mapping_confirmed": true,
+      "flags": [
+        {
+          "unit": "3A Deans Road",
+          "signal": "break_taken",
+          "needs_signoff": true,
+          "note": "vacate + re-let",
+          "rationale": "Whether the tenant exercises the break is an assumption about future behaviour that materially changes the cashflow and re-letting profile."
+        },
+        {
+          "unit": "3C Deans Road",
+          "signal": "vacate@expiry",
+          "needs_signoff": true,
+          "note": "re-let",
+          "rationale": "Assuming the tenant vacates at expiry (vs renews) drives void/re-let costs and the income profile - a forward-looking judgement."
+        },
+        {
+          "unit": "4 Deans Road",
+          "signal": "break_taken",
+          "needs_signoff": true,
+          "note": "vacate + re-let",
+          "rationale": "Whether the tenant exercises the break is an assumption about future behaviour that materially changes the cashflow and re-letting profile."
+        },
+        {
+          "unit": "5 Deans Road",
+          "signal": "under_offer",
+          "needs_signoff": true,
+          "note": "let from entry, 5yr term",
+          "rationale": "An agreed-but-not-completed letting; whether and when to recognise the income is a judgement on deal certainty."
+        },
+        {
+          "unit": "7 Deans Road",
+          "signal": "vacant@entry",
+          "needs_signoff": true,
+          "note": "cap on ERV; deduct guarantee off PP; re-let I8/I9",
+          "rationale": "Vacant units carry no contractual income; value depends on the analyst's view of headline/guarantee rent and the re-letting (void/rent-free/capex) assumptions - a pricing judgement, not a fact in the schedule."
+        },
+        {
+          "unit": "15A Deans Road",
+          "signal": "vacate@expiry",
+          "needs_signoff": true,
+          "note": "re-let",
+          "rationale": "Assuming the tenant vacates at expiry (vs renews) drives void/re-let costs and the income profile - a forward-looking judgement."
+        },
+        {
+          "unit": "3 Canons Road",
+          "signal": "vacate@expiry",
+          "needs_signoff": true,
+          "note": "re-let",
+          "rationale": "Assuming the tenant vacates at expiry (vs renews) drives void/re-let costs and the income profile - a forward-looking judgement."
+        },
+        {
+          "unit": "5 & 6 Canons Road",
+          "signal": "vacate@expiry",
+          "needs_signoff": true,
+          "note": "re-let",
+          "rationale": "Assuming the tenant vacates at expiry (vs renews) drives void/re-let costs and the income profile - a forward-looking judgement."
+        },
+        {
+          "unit": "8 Canons Road",
+          "signal": "break_taken",
+          "needs_signoff": true,
+          "note": "vacate + re-let",
+          "rationale": "Whether the tenant exercises the break is an assumption about future behaviour that materially changes the cashflow and re-letting profile."
+        },
+        {
+          "unit": "9 Canons Road",
+          "signal": "vacant@entry",
+          "needs_signoff": true,
+          "note": "cap on ERV; deduct guarantee off PP; re-let I8/I9",
+          "rationale": "Vacant units carry no contractual income; value depends on the analyst's view of headline/guarantee rent and the re-letting (void/rent-free/capex) assumptions - a pricing judgement, not a fact in the schedule."
+        },
+        {
+          "unit": "12 Canons Road",
+          "signal": "break_taken",
+          "needs_signoff": true,
+          "note": "vacate + re-let",
+          "rationale": "Whether the tenant exercises the break is an assumption about future behaviour that materially changes the cashflow and re-letting profile."
+        },
+        {
+          "unit": "3A Deans Road",
+          "signal": "break_taken",
+          "treatment": "break exercised -> vacate + re-let; suppress post-break review",
+          "needs_signoff": true,
+          "rationale": "Whether the tenant exercises the break is an assumption about future behaviour that materially changes the cashflow and re-letting profile."
+        },
+        {
+          "unit": "4 Deans Road",
+          "signal": "break_taken",
+          "treatment": "break exercised -> vacate + re-let; suppress post-break review",
+          "needs_signoff": true,
+          "rationale": "Whether the tenant exercises the break is an assumption about future behaviour that materially changes the cashflow and re-letting profile."
+        },
+        {
+          "unit": "5 Deans Road",
+          "signal": "under_offer",
+          "treatment": "let from agreed start on agreed rent/term",
+          "needs_signoff": true,
+          "rationale": "An agreed-but-not-completed letting; whether and when to recognise the income is a judgement on deal certainty."
+        },
+        {
+          "unit": "7 Deans Road",
+          "signal": "vacant@entry",
+          "treatment": "capitalise guarantee/headline rent; re-let at void/RF defaults",
+          "needs_signoff": true,
+          "rationale": "Vacant units carry no contractual income; value depends on the analyst's view of headline/guarantee rent and the re-letting (void/rent-free/capex) assumptions - a pricing judgement, not a fact in the schedule."
+        },
+        {
+          "unit": "8 Canons Road",
+          "signal": "break_taken",
+          "treatment": "break exercised -> vacate + re-let; suppress post-break review",
+          "needs_signoff": true,
+          "rationale": "Whether the tenant exercises the break is an assumption about future behaviour that materially changes the cashflow and re-letting profile."
+        },
+        {
+          "unit": "9 Canons Road",
+          "signal": "vacant@entry",
+          "treatment": "capitalise guarantee/headline rent; re-let at void/RF defaults",
+          "needs_signoff": true,
+          "rationale": "Vacant units carry no contractual income; value depends on the analyst's view of headline/guarantee rent and the re-letting (void/rent-free/capex) assumptions - a pricing judgement, not a fact in the schedule."
+        },
+        {
+          "unit": "12 Canons Road",
+          "signal": "break_taken",
+          "treatment": "break exercised -> vacate + re-let; suppress post-break review",
+          "needs_signoff": true,
+          "rationale": "Whether the tenant exercises the break is an assumption about future behaviour that materially changes the cashflow and re-letting profile."
+        }
+      ],
+      "schema_errors": [],
+      "units": 28,
+      "baseline": null,
+      "runs": [],
+      "returns": null,
+      "checks": null,
+      "display_returns": false,
+      "updated_at": "2026-06-10T09:53:03.076161Z"
+    }
   }
 ]
