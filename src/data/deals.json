@@ -96,9 +96,9 @@
       }
     },
     "created_at": "2026-05-11T11:59:44.756422Z",
-    "updated_at": "2026-06-10T09:53:03.077561Z",
+    "updated_at": "2026-06-10T17:15:36.919457Z",
     "underwrite": {
-      "status": "flagged",
+      "status": "underwritten",
       "asset": "Canon Industrial Park",
       "region": "Milton Keynes",
       "raw_path": "C:\\Screening Framework\\extractor\\underwrite_runs\\bef9beb3fedf43e5\\raw_cannon TS.xlsx",
@@ -239,12 +239,147 @@
       ],
       "schema_errors": [],
       "units": 28,
-      "baseline": null,
-      "runs": [],
-      "returns": null,
-      "checks": null,
-      "display_returns": false,
-      "updated_at": "2026-06-10T09:53:03.076161Z"
+      "baseline": {
+        "at": "2026-06-10T17:15:36.917585Z",
+        "assumptions": {
+          "entry_date": "2026-06-01",
+          "hold_years": 5,
+          "exit_yield": 0.0625,
+          "rental_growth": 0.045,
+          "ltv": 0,
+          "scenario": 1
+        },
+        "returns": {
+          "unlevered_irr": 0.148573133984107,
+          "net_investor_irr": 0.104316619706743,
+          "levered_irr": 0.115437683139766,
+          "equity_multiple": 1.65508822795602,
+          "cash_on_cash": 0.070342580420627,
+          "net_exit_price": 39.1044717988999,
+          "net_purchase_price": 24130876.2753455
+        },
+        "checks": {
+          "pass": true,
+          "anchor_tieout_ok": true,
+          "workbook_error_cells": 0
+        },
+        "version": 1
+      },
+      "runs": [
+        {
+          "version": 1,
+          "type": "run",
+          "at": "2026-06-10T17:15:36.917585Z",
+          "analyst": "cli-proof",
+          "is_baseline": true,
+          "assumptions": {
+            "entry_date": "2026-06-01",
+            "hold_years": 5,
+            "exit_yield": 0.0625,
+            "rental_growth": 0.045,
+            "ltv": 0,
+            "scenario": 1
+          },
+          "vs_previous": {
+            "rental_growth": {
+              "from": null,
+              "to": 0.045
+            },
+            "exit_yield": {
+              "from": null,
+              "to": 0.0625
+            },
+            "hold_years": {
+              "from": null,
+              "to": 5
+            },
+            "entry_date": {
+              "from": null,
+              "to": "2026-06-01"
+            },
+            "ltv": {
+              "from": null,
+              "to": 0
+            },
+            "scenario": {
+              "from": null,
+              "to": 1
+            }
+          },
+          "vs_baseline": {
+            "rental_growth": {
+              "from": null,
+              "to": 0.045
+            },
+            "exit_yield": {
+              "from": null,
+              "to": 0.0625
+            },
+            "hold_years": {
+              "from": null,
+              "to": 5
+            },
+            "entry_date": {
+              "from": null,
+              "to": "2026-06-01"
+            },
+            "ltv": {
+              "from": null,
+              "to": 0
+            },
+            "scenario": {
+              "from": null,
+              "to": 1
+            }
+          },
+          "flag_resolutions": [],
+          "returns": {
+            "unlevered_irr": 0.148573133984107,
+            "net_investor_irr": 0.104316619706743,
+            "levered_irr": 0.115437683139766,
+            "equity_multiple": 1.65508822795602,
+            "cash_on_cash": 0.070342580420627,
+            "net_exit_price": 39.1044717988999,
+            "net_purchase_price": 24130876.2753455
+          },
+          "checks": {
+            "pass": true,
+            "anchor_tieout_ok": true,
+            "workbook_error_cells": 0
+          },
+          "assumption_notes": [],
+          "note": "direct CLI proof, bypassing browser",
+          "model_xlsx": "C:\\Screening Framework\\extractor\\underwrite_runs\\bef9beb3fedf43e5\\run_20260610T171453Z\\model.xlsx",
+          "passed": true
+        }
+      ],
+      "returns": {
+        "unlevered_irr": 0.148573133984107,
+        "net_investor_irr": 0.104316619706743,
+        "levered_irr": 0.115437683139766,
+        "equity_multiple": 1.65508822795602,
+        "cash_on_cash": 0.070342580420627,
+        "net_exit_price": 39.1044717988999,
+        "net_purchase_price": 24130876.2753455
+      },
+      "checks": {
+        "pass": true,
+        "anchor_tieout_ok": true,
+        "workbook_error_cells": 0
+      },
+      "display_returns": true,
+      "updated_at": "2026-06-10T17:15:36.918743Z",
+      "assumptions": {
+        "entry_date": "2026-06-01",
+        "hold_years": 5,
+        "exit_yield": 0.0625,
+        "rental_growth": 0.045,
+        "ltv": 0,
+        "scenario": 1
+      },
+      "assumption_notes": [],
+      "model_xlsx": "C:\\Screening Framework\\extractor\\underwrite_runs\\bef9beb3fedf43e5\\run_20260610T171453Z\\model.xlsx",
+      "latest_version": 1
     }
   }
 ]

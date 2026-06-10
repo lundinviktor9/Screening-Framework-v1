@@ -18,11 +18,37 @@ Ctrl+Alt+F9 review remains the gold standard before any number reaches an IC.
 """
 from __future__ import annotations
 import json
+import os
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+
+def _soffice_bin() -> str:
+    """LibreOffice executable. Resolution order:
+      1. SOFFICE_BIN env var (absolute path), if set.
+      2. Auto-detect the standard Windows/macOS/Linux install locations — so a normal
+         LibreOffice install Just Works with no PATH or env editing.
+      3. Fall back to `soffice` on PATH.
+    Step 2 exists because Python's subprocess on Windows does not reliably resolve a bare
+    `soffice` name from a shell-exported PATH; pointing at the absolute .exe avoids WinError 2."""
+    env = os.environ.get("SOFFICE_BIN")
+    if env:
+        return env
+    candidates = (
+        r"C:\Program Files\LibreOffice\program\soffice.exe",
+        r"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
+        "/Applications/LibreOffice.app/Contents/MacOS/soffice",
+        "/usr/bin/soffice",
+        "/usr/local/bin/soffice",
+        "/opt/libreoffice/program/soffice",
+    )
+    for cand in candidates:
+        if os.path.exists(cand):
+            return cand
+    return "soffice"
 
 import openpyxl
 from openpyxl.utils import column_index_from_string as cix
@@ -67,8 +93,11 @@ def _recalc(xlsx_in: Path, out_dir: Path, profile: Path, timeout: int = 240) -> 
             '</oor:items>\n'
         )
     out_dir.mkdir(parents=True, exist_ok=True)
+    # Path.as_uri() gives a valid file URL on every OS (file:///C:/... on Windows, file:///tmp/...
+    # on Linux); the old f"file://{profile}" was malformed on Windows and broke Mode B there.
+    profile_uri = profile.resolve().as_uri()
     subprocess.run(
-        ["soffice", f"-env:UserInstallation=file://{profile}", "--headless", "--calc",
+        [_soffice_bin(), f"-env:UserInstallation={profile_uri}", "--headless", "--calc",
          "--convert-to", "xlsx", "--outdir", str(out_dir), str(xlsx_in)],
         check=True, capture_output=True, timeout=timeout,
     )
@@ -209,6 +238,17 @@ def run_mode_b(
     workdir: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Populate the model from a normalised RR and return the underwrite block."""
+    # Diagnostic: print all paths and verify existence
+    print(f"\n=== Mode B Diagnostics ===")
+    print(f"deal_id={deal_id}, rr_sheet={rr_sheet}")
+    print(f"PINNED_BASE={PINNED_BASE}, exists={PINNED_BASE.exists()}")
+    print(f"INJECTOR={INJECTOR}, exists={INJECTOR.exists()}")
+    print(f"normalised_rr_xlsx={normalised_rr_xlsx}, exists={Path(normalised_rr_xlsx).exists()}")
+    print(f"workdir={workdir}")
+    print(f"soffice={_soffice_bin()}, exists={os.path.exists(_soffice_bin())}")
+    print(f"sys.executable={sys.executable}, exists={os.path.exists(sys.executable)}")
+    print(f"=== end diagnostics ===\n", flush=True)
+
     base_p = Path(base) if base else PINNED_BASE
     if not base_p.exists():
         raise UnderwriteError(f"pinned base not found: {base_p}")
@@ -217,28 +257,50 @@ def run_mode_b(
     profile = work / "lo_profile"
 
     prepared = work / "prepared_base.xlsx"
-    _copy_rr_into_base(base_p, Path(normalised_rr_xlsx), rr_sheet, prepared)
+    try:
+        _copy_rr_into_base(base_p, Path(normalised_rr_xlsx), rr_sheet, prepared)
+    except Exception as e:
+        raise UnderwriteError(f"_copy_rr_into_base failed: {e}")
 
     # Entry-yield pricing dial must be stamped onto RR col H before injection (see helper).
-    entry_yield_notes = _apply_entry_yield(prepared, rr_sheet, assumptions)
+    try:
+        entry_yield_notes = _apply_entry_yield(prepared, rr_sheet, assumptions)
+    except Exception as e:
+        raise UnderwriteError(f"_apply_entry_yield failed: {e}")
 
     injected = work / "model_injected.xlsx"
-    subprocess.run(
-        [sys.executable, str(INJECTOR), "--base", str(prepared), "--rr-sheet", rr_sheet,
-         "--asset", asset, "--region", region, "--entry", entry, "--out", str(injected)],
-        check=True, capture_output=True, timeout=180,
-    )
+    try:
+        subprocess.run(
+            [sys.executable, str(INJECTOR), "--base", str(prepared), "--rr-sheet", rr_sheet,
+             "--asset", asset, "--region", region, "--entry", entry, "--out", str(injected)],
+            check=True, capture_output=True, timeout=180,
+        )
+    except subprocess.CalledProcessError as e:
+        raise UnderwriteError(f"injector failed: returncode={e.returncode}, "
+                            f"stdout={e.stdout.decode()[:200]}, stderr={e.stderr.decode()[:200]}")
+    except Exception as e:
+        raise UnderwriteError(f"injector subprocess error: {type(e).__name__}: {e}")
 
     assumption_notes: List[str] = list(entry_yield_notes)
     if assumptions:
-        wb = openpyxl.load_workbook(injected)
-        assumption_notes += _apply_assumptions(wb, assumptions, rr_sheet)
-        wb.save(injected)   # the LibreOffice recalc below is the faithful round-trip
+        try:
+            wb = openpyxl.load_workbook(injected)
+            assumption_notes += _apply_assumptions(wb, assumptions, rr_sheet)
+            wb.save(injected)
+        except Exception as e:
+            raise UnderwriteError(f"_apply_assumptions failed: {e}")
 
-    recalced = _recalc(injected, work / "recalc_out", profile)
-    returns = _read_returns(recalced)
-    err_cells = _count_workbook_errors(recalced)
-    tieout_ok = _anchor_tieout_ok(injected, profile, work)
+    try:
+        recalced = _recalc(injected, work / "recalc_out", profile)
+    except Exception as e:
+        raise UnderwriteError(f"LibreOffice recalc failed: {type(e).__name__}: {e}")
+
+    try:
+        returns = _read_returns(recalced)
+        err_cells = _count_workbook_errors(recalced)
+        tieout_ok = _anchor_tieout_ok(injected, profile, work)
+    except Exception as e:
+        raise UnderwriteError(f"post-recalc processing failed: {e}")
 
     checks = {
         "pass": bool(tieout_ok and err_cells == 0),

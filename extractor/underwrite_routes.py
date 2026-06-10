@@ -348,7 +348,16 @@ def make_underwrite_router(store) -> APIRouter:
             result = uw.run_mode_b(deal_id, rr_xlsx, RR_SHEET, asset, region, entry,
                                    assumptions=assumptions, workdir=str(run_dir))
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Mode B failed: {e}")
+            import traceback as _tb
+            _trace = _tb.format_exc()
+            error_log_path = REPO_ROOT / "mode_b_error.log"
+            try:
+                error_log_path.write_text(_trace, encoding="utf-8")
+                detail = f"Mode B failed: {e}\n\nFull traceback saved to {error_log_path}"
+            except Exception:
+                detail = f"Mode B failed: {e}\n\nFull traceback:\n{_trace}"
+            print("\n=== Mode B traceback ===\n" + _trace + "\n=== end traceback ===\n", flush=True)
+            raise HTTPException(status_code=500, detail=detail)
 
         model_dest = run_dir / "model.xlsx"
         try:
