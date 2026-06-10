@@ -1,7 +1,30 @@
 # TASKS — Brunswick Screening Framework
 
 ## Last Updated
-9 June 2026
+10 June 2026 — Underwrite UI improvements completed
+
+## Session Handover — 2026-06-10 (Underwrite UI improvements)
+
+**Completed this session (committed):**
+- [x] Task 1: Split Underwrite into its own sidebar tab
+  - New `/underwrite` route → `UnderwritePage.tsx` (97 lines)
+  - Lists deals with underwrite status; selecting a deal opens detail drawer
+  - Independent of Pipeline tab (deals uploaded there, underwritten here)
+- [x] Task 2: Fix number formats in deal profiles  
+  - Added `formatCurrency`, `formatPercent`, `formatNumber` to DealProfileDrawer
+  - Key Financials now shows: NIY/RY as % (6.25%), Deal Value as full £ (£28,000,000), WAULT in years
+  - Also fixed Occupancy display (e.g., 95%)
+- [x] Task 3: Improve "Run underwrite" error feedback
+  - Run button now grey + disabled when mapping/flags not signed off or entry date missing
+  - Helper text lists what's missing (Check mapping / Check flags / Set entry date)
+  - During run: shows "⏳ Running (~30s, LibreOffice recalculating)…"
+  - On error: red banner with diagnostic hints (Is extractor running? Is LibreOffice installed?)
+
+**Commit:** `7de4018 Underwrite UI improvements: new tab, number formatting, error feedback`
+
+**Next session:** Can start from the next task on the priority list. No blockers or gotchas. The three improvements are independent; all three have been tested for TypeScript errors and verified in the live app.
+
+---
 
 ## Current Status
 
