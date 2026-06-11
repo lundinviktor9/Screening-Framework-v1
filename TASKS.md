@@ -1,7 +1,77 @@
 # TASKS — Brunswick Screening Framework
 
 ## Last Updated
-11 June 2026 (night) — UI Overhaul Phase 0: Handoff #1 landing verification (BLOCKING gate)
+11 June 2026 (night) — Phase 0 fixes landed + UI Overhaul Phase 1 (design system + shell) complete
+
+## Session Handover — 2026-06-11 (Night, pt.2) — Phase 0 fixes + Phase 1 foundation
+
+Continued from the Phase 0 audit below. Fixed all three outstanding Phase 0 items end-to-end,
+then built Phase 1 of `docs/HANDOFF_ui_overhaul.md`. Three commits this session:
+`aac3c3b` (Phase 0 audit), `f97c73a` (Phase 0 fixes), `ceef87c` (Phase 1).
+
+### Phase 0 fixes (commit f97c73a) — all verified with live output
+- **Task 5 (PPTX export):** `extractor/export_routes.py` used `FileResponse(iter([bytes]))`
+  (iterator where a path is expected → 500). Now returns the bytes via `Response`. Verified:
+  `POST /export/deck` → HTTP 200, valid 3-slide pptx (31.9 KB).
+- **Task 1 (returns.cfo):** `underwrite/engine/read_cfo.py` assumed Unlevered/Levered were
+  COLUMN headers, but the v21 CFO sheet lays metrics as ROW labels (col I = "KPI") with views
+  as columns (J=Investment/levered, L=Unlevered); IRR reads from a different row per view
+  (17 unlev / 18 lev). It also crashed on numeric cells (`.lower()` on a float). Rewrote as a
+  label-resolved reader anchored to the "KPI" column (ignores the debt-assumptions table that
+  shares cols C-F). Verified against the real recalced model; backfilled `returns.cfo` into all
+  Cannon runs + top-level in `src/data/deals.json`.
+- **Task 8 (gap-overrides) — NEW, was never built:** backend computes per-field blank-cell
+  counts over the canonical RR (`GAP_FIELDS` by column letter in `underwrite_routes.py`),
+  exposes `gaps` on the upload/confirm/GET responses, accepts `gap_overrides` on `/run` and
+  fills ONLY blank unit cells in a COPY of the RR (broker data never overwritten; recorded in
+  the run audit trail + assumption_notes). `UnderwritingPanel.tsx` renders a "Gap overrides"
+  section (count badge per field, input disabled when the schedule is complete).
+  Verified end-to-end: real Mode B run **v3** (void=3mths, capex=£10psf) → checks.pass, 0 error
+  cells, overrides applied to 20 units each, unlevered IRR moved 0.187→0.178 as expected.
+
+### Phase 1 — design system foundation + shell (commit ceef87c)
+- **1.1 Tooling:** installed shadcn primitives, `@tremor/react`, `@tanstack/react-table`,
+  `lucide-react`, `@fontsource/inter`, `tailwindcss-animate`, `sonner`. Path alias `@/*` wired
+  in `webpack.config.js` (resolve.alias) + `tsconfig.app.json` (paths, no baseUrl). Removed the
+  stale `"vite/client"` type. **Added `react-is`** (recharts peer) — the build broke without it.
+- **1.2 Theme:** `src/theme/brand.ts` expanded to the full palette (legacy keys kept for
+  pptx_builder/showcase), mirrored in `extractor/brand.json`; shadcn HSL CSS variables in
+  `src/index.css` (brand purple → `--primary`, purple `--sidebar-*`); `tailwind.config.js` maps
+  the tokens + Inter + accordion keyframes.
+- **1.3 Shell:** new grouped collapsible sidebar (`Sidebar.tsx` — SCREENING/DEALS/ADMIN, lucide
+  icons, tooltips when collapsed, persisted collapse state); `AppLayout.tsx` with brand header,
+  route-aware breadcrumb, global `<Toaster/>` + a promise-based `confirmDialog` (zustand +
+  AlertDialog, `src/components/ui/confirm.tsx`). **All alert()/confirm() removed** across 12
+  files → toasts / AlertDialog (grep confirms zero remain).
+- Vendored UI components in `src/components/ui/`: button, badge, card, separator, tooltip,
+  breadcrumb, alert-dialog, skeleton, sonner, confirm. `components.json` added so
+  `npx shadcn@latest add <comp>` works for Phase 2.
+
+### Verification done
+- `npx webpack --mode production` compiles clean (542 modules).
+- Headless render (own Edge + CDP, port 9333) of `/ /rankings /pipeline /underwrite
+  /sensitivity`: 11 sidebar nav links, breadcrumb present, Inter font applied, **zero runtime
+  console errors** on every route.
+
+### Gotchas / notes for next session
+- The build is **babel-loader, not tsc** — webpack does NOT type-check. `tsc -p tsconfig.json`
+  is a no-op (files:[]); the real type project is `tsconfig.app.json`, which has ~15 PRE-EXISTING
+  type errors (PortfolioFitAnalyser `delta`, recharts Tooltip formatter types, leaflet/mapbox
+  CSS-module decls, unused vars). They don't block the babel build but should be cleaned up
+  eventually. None are from the new UI code.
+- Tremor pulled its own nested `recharts@2` (app uses `recharts@3` top-level) — separate trees,
+  fine; watch if a chart ever imports across them.
+- `extractor/underwrite_runs/**/lo_profile/` is now gitignored (transient LibreOffice dumps).
+- CARELESS CLEANUP: a `taskkill //IM msedge.exe` during verification closed ALL Edge windows,
+  not just the headless instance — kill test browsers by PID next time.
+
+### Next: Phase 2 — page redesigns (one task/page, see HANDOFF_ui_overhaul.md §Phase 2)
+Start with **2.1 Pipeline** (TanStack DataTable, row-selection → Export deck toolbar, status
+Badges, inline edit Popover, card dropzone, empty state). All Phase 1 primitives are ready;
+add more shadcn components per page via `npx shadcn@latest add`. Per-page acceptance requires a
+screenshot side-by-side + empty/loading/error states + zero default-blue (use brand tokens).
+
+---
 
 ## Session Handover — 2026-06-11 (Night) — UI Overhaul Phase 0 verification
 
