@@ -1,7 +1,72 @@
 # TASKS — Brunswick Screening Framework
 
 ## Last Updated
-11 June 2026 (night) — UI Overhaul Phase 2 COMPLETE (all 9 pages). Phase 3 (deploy) is next.
+11 June 2026 (night) — Phase 3 deploy-readiness COMPLETE in code (3.1 + 3.2 + 3.3 artifacts).
+Remaining: provision the Railway project (account-side) + run the deployed smoke test.
+
+## Session Handover — 2026-06-11 (Night, pt.6) — Phase 3: package & deploy (Railway)
+
+Made the repo deploy-ready as a single container per `HANDOFF_ui_overhaul.md` §Phase 3. All code
+landed + verified locally; the only thing left is the account-side Railway provisioning (create
+project, set secrets, attach the `/data` volume) + the deployed smoke test — see `docs/DEPLOY.md`.
+
+### FIRST cleanup — centralised the frontend API base (done)
+- New `src/config/api.ts` exporting `API_BASE` (injected by webpack DefinePlugin).
+  `webpack.config.js` now computes `apiBase` = `''` in a production build (same-origin),
+  `http://localhost:8787` in dev, honouring an explicit `API_BASE` env override. The config
+  export changed from `=> ({...})` to `=> { ...; return {...} }` — validated with `node -e`.
+- Replaced all 8 hardcoded `http://localhost:8787` usages (useDealStore, UnderwriteStepper,
+  UnderwritingPanel, DealProfilePage, DealUploadPanel, DealDataTable, DealProfileDrawer,
+  PhotoCard) with `${API_BASE}`. `grep localhost:8787 src/` → only the doc comment in api.ts.
+  **Verified: prod bundle contains 0 occurrences of `localhost:8787`.**
+
+### 3.1 Single-container build (done)
+- `Dockerfile` (multi-stage): `node:20` webpack build → `python:3.11-slim` + `libreoffice-calc`,
+  copies app code + `public/data` + the built bundle into `static/`. CMD seeds `deals.json` into
+  the volume on first boot then runs uvicorn on `$PORT`.
+- `extractor/paths.py` — NEW central path config. `DATA_DIR` env relocates ALL mutable state
+  (deals.json, underwrite_runs/, showcase_img/, pdfs_ingested/) under one root when deployed;
+  unset = byte-for-byte the old in-repo locations (dev unchanged). Per-key env overrides
+  (UNDERWRITE_OUT_DIR, SHOWCASE_IMG_DIR, …) still win. `server.py`, `underwrite_routes.py`,
+  `showcase_routes.py` all route through it. Also fixed a latent regenerate-showcase PDF path
+  (was `pdfs_ingested/{source_filename}`; server stores `{deal_id}.pdf`).
+- `server.py`: env-driven CORS (`CORS_ORIGINS`), SPA static mount at `/` mounted LAST (custom
+  `_SPAStaticFiles` catches Starlette's raised 404 → serves `index.html` for client routes).
+  **Verified via TestClient: `/` + hashed bundle serve; `/pipeline/<id>` falls back to index;
+  API routes (`/health`, `/deals`) still win over the mount.**
+- `requirements.txt`: added `openpyxl` (was used by the engine but MISSING), `bcrypt`,
+  `itsdangerous`.
+
+### 3.2 Auth (done) — OPT-IN
+- `extractor/auth.py` — `install_auth(app)`: signed-cookie session (itsdangerous), bcrypt
+  `APP_USERS="user:hash,..."`, branded server-rendered `/login`, `/logout`, per-IP failed-login
+  rate limit, gate middleware (browser→redirect to /login, XHR→401; exempts /login /logout
+  /healthz /health /static). **No-op when `APP_USERS` unset → dev unchanged; bcrypt/itsdangerous
+  imported lazily so dev runs even without them installed.** Hash helper: `python -m extractor.auth
+  hash '<pw>'`. **Verified end-to-end via TestClient: unauth API→401, unauth nav→302 /login,
+  bad login→error, good login→cookie+redirect, authed→200, /healthz+/health exempt.**
+- `/healthz` endpoint (deals readable + soffice present → 200, else 503) for the Railway healthcheck.
+
+### 3.3 Railway artifacts (done; provisioning is account-side)
+- `railway.json` (Dockerfile builder, healthcheck `/healthz`), `.dockerignore`, `.env.example`
+  (every env var documented), `docs/DEPLOY.md` (full runbook: credentials, volume at `/data`,
+  secrets incl. MAPBOX_TOKEN as a BUILD-time arg, smoke-test checklist, local `docker run`).
+
+### Verified locally
+- `npm run build` compiles clean (prod). Server imports clean in BOTH dev (auth off, no static)
+  and auth-on modes. Auth + SPA + healthz all exercised via Starlette TestClient (above).
+- Installed `bcrypt`+`itsdangerous` into the local env while testing (now pinned in requirements).
+
+### NEXT (account-side — needs Viktor)
+1. Create the Railway project from the GitHub repo; **attach a persistent volume at `/data`**.
+2. Set vars: `ANTHROPIC_API_KEY`, `MAPBOX_TOKEN` (restrict to the Railway domain), `APP_USERS`,
+   `SESSION_SECRET`, `DATA_DIR=/data`. Deploy.
+3. Run the deployed smoke test in `docs/DEPLOY.md` from a colleague's machine + confirm a redeploy
+   preserves data. NOTE: the Dockerfile/build have NOT been run through an actual `docker build`
+   yet (no Docker in this session) — first Railway build is the real integration test; watch the
+   build log for the LibreOffice apt step + pip wheels.
+
+---
 
 ## Session Handover — 2026-06-11 (Night, pt.5) — Phase 2 pages 2.7–2.9 + Tremor
 

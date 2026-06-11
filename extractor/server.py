@@ -54,22 +54,31 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS configuration
+# CORS configuration. In production the frontend is served same-origin so CORS is
+# irrelevant; for local dev the webpack server (:5173) calls across origins. Extra
+# origins can be added via CORS_ORIGINS (comma-separated).
+_default_origins = ["http://localhost:5173", "http://localhost:3000"]
+_extra_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=_default_origins + _extra_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Initialize components
-REPO_ROOT = Path(__file__).parent.parent
-MARKETS_CONFIG = REPO_ROOT / "scrapers" / "config" / "markets.json"
-POSTCODE_MAP = Path(__file__).parent / "postcode_area_to_market.json"
-STRATEGY_WEIGHTS = Path(__file__).parent / "strategy_weights.json"
-DEALS_JSON = REPO_ROOT / "src" / "data" / "deals.json"
-SCORED_MARKETS = REPO_ROOT / "public" / "data" / "scored_markets.json"
+# Initialize components — all mutable-state paths come from the central config module
+# (in-repo locations in dev; under DATA_DIR when deployed).
+from extractor import paths
+from extractor.auth import install_auth
+
+REPO_ROOT = paths.REPO_ROOT
+MARKETS_CONFIG = paths.MARKETS_CONFIG
+POSTCODE_MAP = paths.POSTCODE_MAP
+STRATEGY_WEIGHTS = paths.STRATEGY_WEIGHTS
+DEALS_JSON = paths.DEALS_JSON
+SCORED_MARKETS = paths.SCORED_MARKETS
+paths.ensure_dirs()
 
 # Load pre-computed market scores
 _scored_markets_by_id = {}
@@ -96,18 +105,17 @@ app.include_router(make_showcase_router(store))
 # Export routes (PPTX deck generation)
 app.include_router(make_export_router(store))
 
-# PDF storage (for /pdf/{deal_id} endpoint)
-PDFS_DIR = REPO_ROOT / "extractor" / "pdfs_ingested"
-PDFS_DIR.mkdir(exist_ok=True)
-
-# Showcase images static files
-SHOWCASE_IMG_DIR = Path(os.environ.get("SHOWCASE_IMG_DIR", "extractor/showcase_img"))
-SHOWCASE_IMG_DIR.mkdir(parents=True, exist_ok=True)
+# PDF storage (for /pdf/{deal_id} endpoint) + showcase images — central paths.
+PDFS_DIR = paths.PDFS_DIR
+SHOWCASE_IMG_DIR = paths.SHOWCASE_IMG_DIR
 from fastapi.staticfiles import StaticFiles
 try:
     app.mount("/showcase-img", StaticFiles(directory=str(SHOWCASE_IMG_DIR)), name="showcase_images")
 except Exception:
     pass  # Silently continue if mount fails
+
+# Session auth gate (no-op unless APP_USERS is set) — install before the SPA mount.
+install_auth(app)
 
 
 class MarketOverride(BaseModel):
@@ -466,6 +474,62 @@ def get_pdf(deal_id: str):
 def health_check() -> Dict[str, str]:
     """Health check endpoint."""
     return {"status": "ok", "service": "deal-pipeline-extractor"}
+
+
+@app.get("/healthz")
+def healthz():
+    """
+    Deep health check for the platform (Railway). Verifies the deal store is
+    readable and the LibreOffice binary (required for underwrite recalc) is present.
+    Returns 200 only if both pass.
+    """
+    import shutil
+
+    deals_ok = DEALS_JSON.exists()
+    try:
+        store.read_all()
+    except Exception:
+        deals_ok = False
+    soffice_ok = bool(shutil.which("soffice") or shutil.which("libreoffice"))
+
+    status = "ok" if (deals_ok and soffice_ok) else "degraded"
+    body = {"status": status, "deals_readable": deals_ok, "soffice": soffice_ok}
+    if status != "ok":
+        raise HTTPException(status_code=503, detail=body)
+    return body
+
+
+# --- Serve the built frontend (production single-container) -------------------
+# Mounted LAST so every API route above is matched first. Falls back to index.html
+# for client-side router paths (e.g. /pipeline/<deal_id>). Skipped in dev when no
+# build exists (webpack-dev-server serves the frontend on :5173 instead).
+from starlette.responses import FileResponse as _FileResponse
+from starlette.exceptions import HTTPException as _StarletteHTTPException
+
+
+class _SPAStaticFiles(StaticFiles):
+    """StaticFiles that returns index.html for unknown paths (SPA deep links).
+
+    Starlette's StaticFiles *raises* HTTPException(404) for a missing path rather
+    than returning a 404 response, so we catch it and fall back to index.html.
+    """
+
+    async def get_response(self, path, scope):
+        try:
+            return await super().get_response(path, scope)
+        except _StarletteHTTPException as exc:
+            if exc.status_code == 404:
+                index = Path(self.directory) / "index.html"
+                if index.exists():
+                    return _FileResponse(str(index))
+            raise
+
+
+if paths.STATIC_DIR.exists() and (paths.STATIC_DIR / "index.html").exists():
+    app.mount("/", _SPAStaticFiles(directory=str(paths.STATIC_DIR), html=True), name="spa")
+    print(f"[server] Serving built frontend from {paths.STATIC_DIR}")
+else:
+    print(f"[server] No frontend build at {paths.STATIC_DIR} — API only (dev mode).")
 
 
 if __name__ == "__main__":

@@ -4,7 +4,17 @@ const webpack = require('webpack');
 
 require('dotenv').config();
 
-module.exports = (env, argv) => ({
+module.exports = (env, argv) => {
+  // Same-origin in production (FastAPI serves the bundle); separate port in dev.
+  // Honour an explicit API_BASE env override for non-standard setups.
+  const apiBase =
+    process.env.API_BASE !== undefined
+      ? process.env.API_BASE
+      : argv.mode === 'production'
+        ? ''
+        : 'http://localhost:8787';
+
+  return {
   entry: './src/main.tsx',
   output: {
     path: path.resolve(__dirname, 'dist'),
@@ -37,7 +47,8 @@ module.exports = (env, argv) => ({
       filename: 'index.html',
     }),
     new webpack.DefinePlugin({
-      'process.env.MAPBOX_TOKEN': JSON.stringify(process.env.MAPBOX_TOKEN)
+      'process.env.MAPBOX_TOKEN': JSON.stringify(process.env.MAPBOX_TOKEN),
+      'process.env.API_BASE': JSON.stringify(apiBase),
     }),
   ],
   devServer: {
@@ -46,7 +57,8 @@ module.exports = (env, argv) => ({
     hot: true,
     open: true,
   },
-  mode: argv.mode || 'development',
-  devtool: argv.mode === 'production' ? false : 'eval-source-map',
-  performance: { hints: false },
-});
+    mode: argv.mode || 'development',
+    devtool: argv.mode === 'production' ? false : 'eval-source-map',
+    performance: { hints: false },
+  };
+};

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import { API_BASE } from '@/config/api';
 import { toast } from '@/components/ui/sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,8 +26,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-
-const API_BASE = 'http://localhost:8787';
 
 type Flag = Record<string, any>;
 const flagKey = (f: Flag) => `${f.unit || ''}|${f.signal || f.field || ''}`;

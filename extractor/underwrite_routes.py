@@ -56,9 +56,8 @@ RR_SHEET = "DealRR"
 MAP_MODEL = os.environ.get("UNDERWRITE_MAP_MODEL", "claude-sonnet-4-6")
 
 # Outputs MUST live outside OneDrive (sync dehydrates/corrupts xlsx mid-write).
-UNDERWRITE_DIR = Path(
-    os.environ.get("UNDERWRITE_OUT_DIR", str(REPO_ROOT / "extractor" / "underwrite_runs"))
-)
+# Resolved centrally: UNDERWRITE_OUT_DIR override > DATA_DIR/underwrite_runs > in-repo.
+from extractor.paths import UNDERWRITE_DIR  # noqa: E402
 UNDERWRITE_DIR.mkdir(parents=True, exist_ok=True)
 
 # Why each judgement signal/field is a JUDGEMENT CALL (recorded next to every flag so the

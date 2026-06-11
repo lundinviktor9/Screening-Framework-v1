@@ -9,11 +9,10 @@ import { KpiStrip } from '../components/showcase/KpiStrip';
 import { MapCard } from '../components/showcase/MapCard';
 import { PhotoCard } from '../components/showcase/PhotoCard';
 import { cn } from '@/lib/utils';
+import { API_BASE } from '@/config/api';
 import { toast } from '@/components/ui/sonner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-
-const API_BASE = 'http://localhost:8787';
 
 export default function DealProfilePage() {
   const { dealId } = useParams<{ dealId: string }>();

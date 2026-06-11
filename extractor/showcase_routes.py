@@ -23,7 +23,8 @@ from extractor.showcase_enrichment import (
 )
 
 
-SHOWCASE_IMG_DIR = Path(os.environ.get("SHOWCASE_IMG_DIR", "extractor/showcase_img"))
+# Resolved centrally: SHOWCASE_IMG_DIR override > DATA_DIR/showcase_img > in-repo.
+from extractor.paths import SHOWCASE_IMG_DIR
 
 
 class ShowcasePatch(BaseModel):
@@ -166,8 +167,12 @@ def make_showcase_router(store: DealStore) -> APIRouter:
         if not deal:
             raise HTTPException(status_code=404, detail="Deal not found")
 
-        # Find the original PDF
-        pdf_path = Path(__file__).parent / "pdfs_ingested" / deal.get("source_filename", "")
+        # Find the original PDF. server.py stores ingested PDFs as <deal_id>.pdf under
+        # the central PDFS_DIR; fall back to the source filename for legacy layouts.
+        from extractor.paths import PDFS_DIR
+        pdf_path = PDFS_DIR / f"{deal_id}.pdf"
+        if not pdf_path.exists():
+            pdf_path = PDFS_DIR / deal.get("source_filename", "")
         if not pdf_path.exists():
             raise HTTPException(
                 status_code=400, detail=f"Original PDF not found: {pdf_path}"

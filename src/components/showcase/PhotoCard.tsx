@@ -1,3 +1,5 @@
+import { API_BASE } from '@/config/api';
+
 interface PhotoCardProps {
   images?: { file: string; selected: boolean }[] | null;
   onSelectImage?: (file: string) => void;
@@ -19,7 +21,7 @@ export function PhotoCard({ images, onSelectImage }: PhotoCardProps) {
       <div className="h-64 rounded-lg border border-gray-200 overflow-hidden bg-gray-100 flex items-center justify-center">
         {selectedImage ? (
           <img
-            src={`http://localhost:8787/${selectedImage.file}`}
+            src={`${API_BASE}/${selectedImage.file}`}
             alt="Asset"
             className="w-full h-full object-cover"
             onError={(e) => {

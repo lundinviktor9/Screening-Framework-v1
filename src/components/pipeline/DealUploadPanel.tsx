@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { UploadCloud, Loader2, FolderInput } from 'lucide-react';
+import { API_BASE } from '@/config/api';
 
 import { useDealStore } from '../../store/useDealStore';
 import { toast } from '@/components/ui/sonner';
@@ -23,7 +24,7 @@ export function DealUploadPanel() {
     files.forEach((file) => setProgress((p) => ({ ...p, [file.name]: 40 })));
 
     try {
-      const response = await fetch('http://localhost:8787/ingest', { method: 'POST', body: formData });
+      const response = await fetch(`${API_BASE}/ingest`, { method: 'POST', body: formData });
       if (!response.ok) throw new Error(`Server responded ${response.status}`);
       const deals = await response.json();
       deals.forEach((deal: any) => {
@@ -54,7 +55,7 @@ export function DealUploadPanel() {
   async function processInbox() {
     setProcessingInbox(true);
     try {
-      const r = await fetch('http://localhost:8787/ingest-folder?folder_path=deals_inbox', {
+      const r = await fetch(`${API_BASE}/ingest-folder?folder_path=deals_inbox`, {
         method: 'POST',
       });
       if (!r.ok) throw new Error(`Server responded ${r.status}`);

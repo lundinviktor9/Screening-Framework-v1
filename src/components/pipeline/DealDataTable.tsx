@@ -15,6 +15,7 @@ import { ArrowUpDown, Calculator, Trash2, Download, Search, Loader2, Pencil } fr
 import { type DealRecord, useDealStore } from '../../store/useDealStore';
 import { UK_MARKETS } from '../../data/ukMarkets';
 import { cn } from '@/lib/utils';
+import { API_BASE } from '@/config/api';
 import { toast } from '@/components/ui/sonner';
 import { confirmDialog } from '@/components/ui/confirm';
 import { Button } from '@/components/ui/button';
@@ -392,7 +393,7 @@ export function DealDataTable({ deals }: Props) {
     if (!selectedIds.length) return;
     setExporting(true);
     try {
-      const r = await fetch('http://localhost:8787/export/deck', {
+      const r = await fetch(`${API_BASE}/export/deck`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ deal_ids: selectedIds, include_pipeline_summary: true }),

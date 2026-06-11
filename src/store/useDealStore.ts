@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { API_BASE } from '@/config/api';
 
 export interface DealRecord {
   deal_id: string;
@@ -79,8 +80,6 @@ export interface DealFilters {
   minWAULT?: number;
   maxWAULT?: number;
 }
-
-const API_BASE = 'http://localhost:8787';
 
 export const useDealStore = create<DealStore>((set, get) => ({
   deals: [],

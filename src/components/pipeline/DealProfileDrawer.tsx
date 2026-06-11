@@ -4,6 +4,7 @@ import { UK_MARKETS } from '../../data/ukMarkets';
 import { UnderwritingPanel } from './UnderwritingPanel';
 import { toast } from '@/components/ui/sonner';
 import { confirmDialog } from '@/components/ui/confirm';
+import { API_BASE } from '@/config/api';
 
 interface DealProfileDrawerProps {
   deal: DealRecord;
@@ -205,7 +206,7 @@ export function DealProfileDrawer({ deal, onClose }: DealProfileDrawerProps) {
       {/* Footer actions */}
       <div className="border-t p-4 space-y-2">
         <button
-          onClick={() => window.open(`http://localhost:8787/pdf/${deal.deal_id}`, '_blank')}
+          onClick={() => window.open(`${API_BASE}/pdf/${deal.deal_id}`, '_blank')}
           className="w-full px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-sm"
         >
           Open PDF

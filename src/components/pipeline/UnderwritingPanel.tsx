@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { API_BASE } from '@/config/api';
 
 /**
  * UnderwritingPanel - deal-detail panel for the MLI underwrite stage (Mode A/B) with full
@@ -9,8 +10,6 @@ import { useEffect, useState } from 'react';
  * Mirrors extractor/underwrite_routes.py and underwrite/INTERFACE.md (HITL mandatory; returns
  * withheld unless checks.pass).
  */
-
-const API_BASE = 'http://localhost:8787';
 
 type Flag = Record<string, any>;
 interface Props { dealId: string }
