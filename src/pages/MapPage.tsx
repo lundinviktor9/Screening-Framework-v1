@@ -260,35 +260,31 @@ export default function MapPage() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Top bar */}
-      <div className="flex items-center gap-4 px-6 py-3 border-b border-gray-100 bg-white flex-shrink-0 flex-wrap">
+      <div className="flex flex-shrink-0 flex-wrap items-center gap-4 border-b bg-card px-6 py-3">
         <div>
-          <h1 className="text-base font-bold text-gray-900 leading-tight">Market Map</h1>
-          <p className="text-xs text-gray-400">{ranked.length} markets · click markers or choropleth areas</p>
+          <h1 className="text-lg font-semibold leading-tight text-foreground">Map</h1>
+          <p className="text-xs text-muted-foreground">{ranked.length} markets · click markers or choropleth areas</p>
         </div>
 
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex flex-wrap gap-2">
           {[
-            { label: 'Tier 1', count: tierCounts.t1, colour: '#15803d', bg: '#f0fdf4', border: '#bbf7d0' },
-            { label: 'Tier 2', count: tierCounts.t2, colour: '#b45309', bg: '#fffbeb', border: '#fde68a' },
-            { label: 'Tier 3', count: tierCounts.t3, colour: '#b91c1c', bg: '#fef2f2', border: '#fecaca' },
+            { label: 'Tier 1', count: tierCounts.t1, tone: 'text-success' },
+            { label: 'Tier 2', count: tierCounts.t2, tone: 'text-warning' },
+            { label: 'Tier 3', count: tierCounts.t3, tone: 'text-danger' },
           ].map(t => (
-            <div
-              key={t.label}
-              className="rounded-lg px-3 py-1.5 border flex items-center gap-2 text-xs"
-              style={{ background: t.bg, borderColor: t.border }}
-            >
-              <span className="font-bold text-sm" style={{ color: t.colour }}>{t.count}</span>
-              <span className="font-medium text-gray-700">{t.label}</span>
+            <div key={t.label} className="flex items-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-xs">
+              <span className={`text-sm font-bold ${t.tone}`}>{t.count}</span>
+              <span className="font-medium text-foreground">{t.label}</span>
             </div>
           ))}
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          <label className="text-xs text-gray-500 font-medium whitespace-nowrap">Region:</label>
+          <label className="whitespace-nowrap text-xs font-medium text-muted-foreground">Region:</label>
           <select
             value={region}
             onChange={e => { setRegion(e.target.value); setSelectedId(null); }}
-            className="border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-purple-400 bg-white"
+            className="rounded-lg border bg-background px-3 py-1.5 text-xs focus:border-primary focus:outline-none"
             style={{ minWidth: 160 }}
           >
             {regions.map(r => (
@@ -301,17 +297,17 @@ export default function MapPage() {
       </div>
 
       {/* Layer controls bar */}
-      <div className="flex items-center gap-3 px-6 py-2 border-b border-gray-100 bg-gray-50 flex-shrink-0 flex-wrap">
+      <div className="flex flex-shrink-0 flex-wrap items-center gap-3 border-b bg-muted/30 px-6 py-2">
         {/* Overlay toggle */}
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Colour by:</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Colour by:</span>
           <div className="flex gap-1">
             {overlayOptions.map(o => (
               <button
                 key={o.key}
                 onClick={() => setOverlay(o.key)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors ${
-                  overlay === o.key ? 'text-white' : 'bg-white text-gray-600 border border-gray-200 hover:border-purple-300'
+                className={`rounded-lg px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                  overlay === o.key ? 'text-white' : 'border bg-card text-foreground hover:border-primary/40'
                 }`}
                 style={overlay === o.key ? { background: o.colour } : {}}
               >
@@ -321,29 +317,28 @@ export default function MapPage() {
           </div>
         </div>
 
-        <div className="h-5 w-px bg-gray-300" />
-        {loadingLads && <span className="text-[10px] text-gray-400">loading boundaries…</span>}
+        <div className="h-5 w-px bg-border" />
+        {loadingLads && <span className="text-[10px] text-muted-foreground">loading boundaries…</span>}
 
         {/* POI toggles */}
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">POI:</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">POI:</span>
           <POIToggle label="⚓ Ports" active={poiVis.ports} onClick={() => setPoiVis(v => ({ ...v, ports: !v.ports }))} disabled={!poiData} />
           <POIToggle label="✈ Airports" active={poiVis.airports} onClick={() => setPoiVis(v => ({ ...v, airports: !v.airports }))} disabled={!poiData} />
           <POIToggle label="⬢ Junctions" active={poiVis.junctions} onClick={() => setPoiVis(v => ({ ...v, junctions: !v.junctions }))} disabled={!poiData} />
           <POIToggle label="━ Motorways" active={poiVis.motorways} onClick={() => setPoiVis(v => ({ ...v, motorways: !v.motorways }))} disabled={!motorwayGeoJson} title={motorwayGeoJson ? '' : 'Run scrapers/poi_scraper.py to enable'} />
         </div>
 
-        <div className="h-5 w-px bg-gray-300" />
+        <div className="h-5 w-px bg-border" />
 
         {/* Radius tool */}
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Radius:</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Radius:</span>
           <button
             onClick={() => { setDrawMode(m => !m); setPlaceAssetMode(false); }}
-            className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors border ${
-              drawMode ? 'text-white border-transparent' : 'bg-white text-gray-600 border-gray-200 hover:border-purple-300'
+            className={`rounded-lg border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+              drawMode ? 'border-transparent bg-primary text-primary-foreground' : 'bg-card text-foreground hover:border-primary/40'
             }`}
-            style={drawMode ? { background: '#3B1F6B' } : {}}
           >
             {drawMode ? 'Click map…' : radiusTool ? 'Move' : 'Draw'}
           </button>
@@ -353,13 +348,12 @@ export default function MapPage() {
                 type="range" min={10} max={150} step={5}
                 value={radiusTool.radiusKm}
                 onChange={e => setRadiusTool({ ...radiusTool, radiusKm: Number(e.target.value) })}
-                className="w-24 h-1.5"
-                style={{ accentColor: '#3B1F6B' }}
+                className="h-1.5 w-24 accent-[hsl(var(--primary))]"
               />
-              <span className="text-[11px] font-semibold text-gray-700 tabular-nums w-12">{radiusTool.radiusKm} km</span>
+              <span className="w-12 text-[11px] font-semibold tabular-nums text-foreground">{radiusTool.radiusKm} km</span>
               <button
                 onClick={() => { setRadiusTool(null); setDrawMode(false); }}
-                className="px-2 py-1 rounded-lg text-[11px] font-medium bg-white text-gray-500 border border-gray-200 hover:text-red-600 hover:border-red-300"
+                className="rounded-lg border bg-card px-2 py-1 text-[11px] font-medium text-muted-foreground hover:border-danger/40 hover:text-danger"
               >
                 Clear
               </button>
@@ -367,25 +361,24 @@ export default function MapPage() {
           )}
         </div>
 
-        <div className="h-5 w-px bg-gray-300" />
+        <div className="h-5 w-px bg-border" />
 
         {/* Portfolio */}
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Portfolio:</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Portfolio:</span>
           <button
             onClick={() => { setPlaceAssetMode(m => !m); setDrawMode(false); }}
-            className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors border ${
-              placeAssetMode ? 'text-white border-transparent' : 'bg-white text-gray-600 border-gray-200 hover:border-purple-300'
+            className={`rounded-lg border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+              placeAssetMode ? 'border-transparent bg-primary text-primary-foreground' : 'bg-card text-foreground hover:border-primary/40'
             }`}
-            style={placeAssetMode ? { background: '#3B1F6B' } : {}}
             title="Click the map to place an asset"
           >
             {placeAssetMode ? 'Click map to place…' : '+ Add asset'}
           </button>
           <button
             onClick={() => { setShowPortfolioPanel(p => !p); setSelectedId(null); }}
-            className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors border ${
-              showPortfolioPanel ? 'bg-purple-100 text-purple-700 border-purple-200' : 'bg-white text-gray-600 border-gray-200 hover:border-purple-300'
+            className={`rounded-lg border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+              showPortfolioPanel ? 'border-primary/30 bg-accent text-accent-foreground' : 'bg-card text-foreground hover:border-primary/40'
             }`}
           >
             {portfolioAssets.length} asset{portfolioAssets.length === 1 ? '' : 's'}
