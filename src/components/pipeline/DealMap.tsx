@@ -51,12 +51,16 @@ export function DealMap({ deals, selectedDeal }: DealMapProps) {
 
   const MAPBOX_TOKEN = process.env.MAPBOX_TOKEN;
 
+  // Pin colour by deal status (brand semantic palette).
+  const statusColor = (deal: DealRecord) =>
+    deal.status === 'reviewed' ? '#1B8A5A' : deal.status === 'failed' ? '#C53030' : '#7D5A7D';
+
   if (!MAPBOX_TOKEN) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-100">
+      <div className="flex h-full w-full items-center justify-center bg-muted">
         <div className="text-center">
-          <p className="text-gray-700 font-medium">Mapbox token not configured</p>
-          <p className="text-xs text-gray-500 mt-1">Add VITE_MAPBOX_TOKEN to .env.local</p>
+          <p className="font-medium text-foreground">Mapbox token not configured</p>
+          <p className="mt-1 text-xs text-muted-foreground">Set MAPBOX_TOKEN in .env (injected via webpack DefinePlugin)</p>
         </div>
       </div>
     );
@@ -78,9 +82,7 @@ export function DealMap({ deals, selectedDeal }: DealMapProps) {
     >
       {markers.map(marker => {
         const isSelected = selectedDeal?.deal_id === marker.deal.deal_id;
-        const fitScore = marker.deal.microlocation_fit_score;
-        const color =
-          fitScore >= 70 ? '#16a34a' : fitScore >= 40 ? '#eab308' : '#dc2626';
+        const color = statusColor(marker.deal);
 
         return (
           <Marker
@@ -90,13 +92,13 @@ export function DealMap({ deals, selectedDeal }: DealMapProps) {
             onClick={() => setPopupDeal(marker.deal)}
           >
             <div
-              className={`w-8 h-8 rounded-full cursor-pointer transition-transform ${
-                isSelected ? 'scale-125 ring-2 ring-offset-2' : ''
+              className={`h-6 w-6 cursor-pointer rounded-full border-2 border-white shadow-md transition-transform ${
+                isSelected ? 'scale-125' : 'hover:scale-110'
               }`}
               style={{
                 backgroundColor: color,
-                opacity: isSelected ? 1 : 0.8,
-                ringColor: color
+                opacity: isSelected ? 1 : 0.9,
+                boxShadow: isSelected ? `0 0 0 3px ${color}55` : undefined,
               }}
               title={marker.deal.extracted_fields?.['Project Name']}
             />
@@ -116,15 +118,14 @@ export function DealMap({ deals, selectedDeal }: DealMapProps) {
           closeButton
           closeOnClick={false}
         >
-          <div className="p-2">
-            <div className="font-medium text-sm">
-              {popupDeal.extracted_fields?.['Project Name']}
+          <div className="p-1">
+            <div className="text-sm font-semibold text-foreground">
+              {popupDeal.extracted_fields?.['Project Name'] || 'Untitled deal'}
             </div>
-            <div className="text-xs text-gray-600 mt-1">
-              NIY: {popupDeal.extracted_fields?.Yield?.toFixed(2)}%
-            </div>
-            <div className="text-xs text-gray-600">
-              Fit: {popupDeal.microlocation_fit_score.toFixed(0)}
+            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+              <span>NIY {popupDeal.extracted_fields?.Yield != null ? Number(popupDeal.extracted_fields.Yield).toFixed(2) + '%' : '—'}</span>
+              <span>RY {popupDeal.extracted_fields?.Yield2 != null ? Number(popupDeal.extracted_fields.Yield2).toFixed(2) + '%' : '—'}</span>
+              <span className="capitalize">{popupDeal.status}</span>
             </div>
           </div>
         </Popup>
