@@ -1,7 +1,57 @@
 # TASKS — Brunswick Screening Framework
 
 ## Last Updated
-11 June 2026 (evening) — Mapping-correction UI (Task 6 complete, Task 7 verified)
+11 June 2026 (night) — UI Overhaul Phase 0: Handoff #1 landing verification (BLOCKING gate)
+
+## Session Handover — 2026-06-11 (Night) — UI Overhaul Phase 0 verification
+
+Executed Phase 0 of `docs/HANDOFF_ui_overhaul.md` only (Handoff #2). Goal: verify every
+Handoff #1 task (the "Deal showcase / PPTX export" build) actually landed, with real probe
+output — not claims. **Phase 1 NOT started.**
+
+### Repo / environment confirmation
+- `git rev-parse --show-toplevel` → `C:/Screening Framework` ✓ (matches required path).
+- ⚠️ DISCREPANCY: `HANDOFF_ui_overhaul.md` header names the target repo as
+  `C:\Users\vilu\Dokument\Screening-Framework-v1` and the Handoff #1 doc as
+  `deal-showcase-build/HANDOFF.md`. **Neither exists here.** No `docs/HANDOFF_showcase.md`
+  either. The only handoff doc in this repo is `docs/HANDOFF_ui_overhaul.md`. Handoff #1's
+  task list was reconstructed from this repo's own TASKS.md history (showcase build, Tasks 1–7)
+  + the Task-8 reference inside the overhaul spec. The "old UI still showing at :5173" the
+  overhaul author observed was very likely a DIFFERENT checkout (the `Dokument\...-v1` path),
+  not this repo.
+
+### Port audit
+- Webpack dev server port is **5173**, set explicitly in `webpack.config.js:41` (`port: 5173`).
+  This is NOT Vite — 5173 just happens to be Vite's default but this repo's Webpack config
+  deliberately binds it (CLAUDE.md documents 5173 as the webpack dev port). No zombie/stale
+  bundle issue in THIS repo.
+- At probe time nothing was listening on 5173 (no dev server) or 8787 (I started then stopped
+  the extractor). `netstat` showed neither port up.
+- **Dev servers to use:** `npm run dev` (webpack → http://localhost:5173) + `npm run extractor`
+  (uvicorn → :8787), or `npm run app` to start both via `concurrently`.
+
+### Handoff #1 task → commit → probe (LIVE output, extractor run on :8787)
+
+| Task | What | Commit | Probe result |
+|------|------|--------|--------------|
+| 1 | CFO returns extraction (header-resolved `read_cfo.py` → `returns.cfo`) | b8301ef | ❌ **FAIL** — code present (`underwrite/engine/read_cfo.py`) but `returns.cfo` is ABSENT. Live `GET /underwrite/bef9beb3fedf43e5` returns keys `[unlevered_irr, net_investor_irr, levered_irr, equity_multiple, cash_on_cash, net_exit_price, net_purchase_price]` — no `cfo`. Same in `deals.json:646` and latest run `run_20260611T000105Z`. (`read_cfo` returns None if any header fails to resolve → silently no block.) Contradicts TASKS.md "Cannon deal shows returns". |
+| 2 | Showcase enrichment at ingestion (`showcase_enrichment.py`) | b8301ef | ✅ Code landed. Route registered. `showcase` field is `null`/absent on the 3 legacy deals (expected — only populated on new PDF upload). |
+| 3 | Showcase API endpoints (`showcase_routes.py`) | b8301ef | ✅ Routes registered: `/deals/{id}/showcase`, `/showcase/image`, `/showcase/regenerate`. `GET .../showcase` → 404 only because legacy deals have no showcase data (route exists). |
+| 4 | Frontend Deal Profile page | b8301ef | ✅ `src/pages/DealProfilePage.tsx` exists; route `/pipeline/:dealId → DealProfilePage` registered (`src/App.tsx:35`). |
+| 5 | PPTX export (`POST /export/deck`) | b8301ef | ❌ **FAIL at runtime** — route registered but live POST returns **HTTP 500**. Bug: `extractor/export_routes.py:60` calls `FileResponse(iter([deck_bytes]), …)`; `FileResponse` expects a file PATH, so `os.stat` throws `TypeError: stat: path should be string… not list_iterator`. Need `Response(content=deck_bytes, …)` or `StreamingResponse`. Contradicts TASKS.md "PPTX export generates valid file (4KB)". |
+| 6 | Mapping-correction UI in UnderwritingPanel | 8dbd5cc | ✅ Static probe: `src/components/pipeline/UnderwritingPanel.tsx:75` calls `POST /underwrite/{dealId}/confirm-mapping`; endpoint registered. |
+| 7 | Full verification | 13d34c1 (doc) | ⚠️ The recorded verification CLAIMED export + cfo work; both shown FALSE above. Treat prior verification as unreliable. |
+| 8 | Gap-overrides section in Assumptions (per-field gap counts, disabled when schedule complete) | — | ❌ **NOT IMPLEMENTED** — no commit, `grep` for gap-override/gapOverride/gap_count across `src/` returns NO matches. Referenced by overhaul spec (Phase 0 & 2.2) as "Handoff #1 Task 8" but TASKS.md only ever documented Tasks 1–7. This is the "old assumptions form, no gap-overrides" the overhaul author saw. |
+
+### Phase 0 verdict
+- **Landed & verified:** Tasks 2, 3, 4, 6.
+- **Need re-execution before Phase 1 (one per session):**
+  - Task 5 — fix `export_routes.py` FileResponse bug (return bytes via `Response`/`StreamingResponse`); re-curl `/export/deck` → expect a valid `.pptx` (PK zip magic).
+  - Task 1 — investigate why `read_cfo` resolves to None for Cannon (header substrings vs the CFO sheet); re-run Mode B so `returns.cfo` persists.
+  - Task 8 — build the gap-overrides section (was never implemented). Overhaul Phase 2.2 Step 3 depends on it.
+- **STOP** — did not start Phase 1 per instruction.
+
+
 
 ## Session Handover — 2026-06-11 (Evening) — Mapping-correction UI completion + full verification
 
