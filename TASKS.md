@@ -1,7 +1,38 @@
 # TASKS — Brunswick Screening Framework
 
 ## Last Updated
-11 June 2026 (night) — UI Overhaul Phase 2 in progress: pages 2.1–2.4 redesigned
+11 June 2026 (night) — UI Overhaul Phase 2: pages 2.1–2.6 redesigned (2.7–2.9 remain)
+
+## Session Handover — 2026-06-11 (Night, pt.4) — Phase 2 pages 2.5–2.6
+
+Continued Phase 2. Two more pages done, each built + headless-verified (zero console errors):
+- **2.5 Rankings** (`246fe50`): brand-tokened table with sticky header; new Tier column
+  (coloured T1/T2/T3 Badges); composite score as inline CategoryBar; expandable row leads with
+  a per-pillar BarList above the metric tables; header/action bar → Button + lucide; StatCards
+  retoned. Kept the bespoke rich table (rank movement, completeness, sparkline, compare,
+  filters) rather than a risky full TanStack swap — it already met the "no unstyled controls"
+  bar. Fixed a `<div>`-in-`<p>` hydration warning.
+- **2.6 Sensitivity** (`9c6eabb`): pillar weights now use shadcn Slider; added a live-sum
+  indicator pill (green ✓ at 100% / red otherwise); Biggest Movers retoned (success/danger,
+  ▲▼ arrows); page + chips on brand tokens. Vendored shadcn slider.
+
+### Remaining Phase 2 pages — DECISIONS NEEDED before building
+- **2.7 Dashboard** — spec calls for Tremor DonutChart/BarChart/Tracker. **Tremor is installed
+  but NOT wired into Tailwind** (needs its content glob + color tokens/safelist in
+  tailwind.config, else it renders unstyled). Decision: either (a) wire Tremor properly, or
+  (b) build the charts with the existing Recharts (already a dep, already used on this page)
+  styled to brand. Recommend (b) for consistency + zero new config risk.
+- **2.8 Map** — full-bleed Mapbox + floating legend Card + tier-coloured pins + hover cards.
+  Mostly retokening MarketMap's surrounding chrome + a brand legend; the map itself works.
+- **2.9 Data Entry / Data Sources / Add Market** — spec wants react-hook-form + zod. That's a
+  new dep + form rewrite. Lighter alternative: retoken existing forms to brand + add inline
+  validation errors + Save toasts; sources list → DataTable with freshness Badges. Recommend
+  the lighter path unless full RHF/zod is wanted.
+
+(Full method/gotchas in pt.3 below still apply: verify via own headless Edge + CDP; kill test
+procs by PID not //IM; build is babel — no typecheck; ~15 pre-existing tsc errors.)
+
+---
 
 ## Session Handover — 2026-06-11 (Night, pt.3) — Phase 2 page redesigns (2.1–2.4)
 
