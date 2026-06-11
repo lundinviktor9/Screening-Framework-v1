@@ -6,6 +6,7 @@ interface EditableFieldProps {
   type?: 'text' | 'number';
   className?: string;
   placeholder?: string;
+  readOnly?: boolean;
 }
 
 export function EditableField({
@@ -13,10 +14,19 @@ export function EditableField({
   onChange,
   type = 'text',
   className = '',
-  placeholder
+  placeholder,
+  readOnly = false
 }: EditableFieldProps) {
   const [editing, setEditing] = useState(false);
   const [tempValue, setTempValue] = useState(String(value || ''));
+
+  if (readOnly) {
+    return (
+      <div className={`px-2 py-1 ${className}`}>
+        {value || <span className="text-muted-foreground">{placeholder || '—'}</span>}
+      </div>
+    );
+  }
 
   const handleSave = () => {
     const newValue = type === 'number' ? (tempValue ? Number(tempValue) : null) : tempValue || null;

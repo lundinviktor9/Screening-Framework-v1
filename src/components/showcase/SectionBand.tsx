@@ -5,8 +5,8 @@ interface SectionBandProps {
 
 export function SectionBand({ title, children }: SectionBandProps) {
   return (
-    <div className="rounded-lg border border-gray-200 overflow-hidden">
-      <div className="bg-brand-purple text-white px-4 py-2 rounded-t-lg font-semibold text-sm">
+    <div className="overflow-hidden rounded-lg border bg-card">
+      <div className="bg-primary px-4 py-2 text-[13px] font-semibold uppercase tracking-wide text-primary-foreground">
         {title}
       </div>
       {children && <div className="p-4">{children}</div>}
