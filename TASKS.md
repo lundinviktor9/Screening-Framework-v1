@@ -1,7 +1,46 @@
 # TASKS — Brunswick Screening Framework
 
 ## Last Updated
-11 June 2026 (night) — UI Overhaul Phase 2: pages 2.1–2.6 redesigned (2.7–2.9 remain)
+11 June 2026 (night) — UI Overhaul Phase 2 COMPLETE (all 9 pages). Phase 3 (deploy) is next.
+
+## Session Handover — 2026-06-11 (Night, pt.5) — Phase 2 pages 2.7–2.9 + Tremor
+
+Finished Phase 2. All nine pages redesigned on the Phase 1 design system, each
+headless-verified (own Edge + CDP, zero console errors).
+
+- **2.7 Dashboard** (`4415c25`): **Tremor wired into Tailwind** (content glob, tremor/
+  dark-tremor colour tokens with brand purple as the Tremor brand, shadows/radius/fontSize,
+  and a colour SAFELIST so chart classes survive purge — verified: donut segments compute real
+  emerald/amber/rose fills). New `MarketOverview` = 4 KPI Cards + tier DonutChart + mean-by-
+  pillar BarChart atop the heatmap view. Compare view's "Pillar Bars" → Tremor `PillarBarChart`.
+  Chrome retoned; protected radar/heatmap/portfolio-fit preserved.
+- **2.8 Map** (`df4bb12`): both toolbar rows retoned to brand (title, tier chips, region
+  select, Colour-by / POI / Radius / Portfolio controls). Leaflet map + logic untouched.
+- **2.9 Admin** (`4a13d25`): Add Market (Save toast), Data Entry (header + per-metric Save
+  toast + brand completeness bar), Data Sources (header + freshness Badge + Newmark block +
+  summary Cards + pillar headers) all on brand tokens.
+
+### How to use Tremor now (it's wired)
+`import { Card, DonutChart, BarChart, AreaChart, LineChart, Tracker, BarList, Metric } from
+'@tremor/react'`. Pass Tremor colour NAMES (`'emerald'`, `'violet'`, …) in `colors=`; they're
+safelisted. The Tremor brand colour = Brunswick purple. Use `text-tremor-content`,
+`text-tremor-brand`, etc. for Tremor-native text tokens.
+
+### PHASE 3 — Package & deploy (Railway) — NOT STARTED. See HANDOFF_ui_overhaul.md §Phase 3.
+- 3.1 Single multi-stage Dockerfile (node build → python:3.11-slim + libreoffice-calc), FastAPI
+  serves built frontend from static/ AFTER api routers + SPA fallback; make the frontend API
+  base same-origin (drop hardcoded http://localhost:8787 — env-driven w/ localhost dev
+  fallback). Consolidate all state under one DATA_DIR.
+- 3.2 Session login (FastAPI middleware, APP_USERS bcrypt env, itsdangerous cookie, rate-limit,
+  /login styled with Phase 1 comps, all routes behind it except /login + /healthz).
+- 3.3 Railway: Dockerfile build + persistent volume at DATA_DIR (CRITICAL), secrets as env,
+  /healthz, smoke-test the full deal flow on the deployed URL.
+- FIRST cleanup before 3.1: the frontend hardcodes `http://localhost:8787` in many files
+  (useDealStore, UnderwriteStepper, DealDataTable, DealProfilePage, DealUploadPanel, MapCard,
+  PhotoCard, UnderwritingPanel). Centralise into one `API_BASE` config module
+  (`process.env.API_BASE || 'http://localhost:8787'`) before deploy.
+
+---
 
 ## Session Handover — 2026-06-11 (Night, pt.4) — Phase 2 pages 2.5–2.6
 
