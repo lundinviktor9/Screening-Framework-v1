@@ -1,9 +1,89 @@
 # TASKS — Brunswick Screening Framework
 
 ## Last Updated
-10 June 2026 — Underwrite UI improvements completed
+11 June 2026 — Deal showcase, editable cards & PPTX export (Tasks 1-5 + partial 6-7)
 
-## Session Handover — 2026-06-10 (Underwrite UI improvements)
+## Session Handover — 2026-06-11 (Deal showcase, editable cards & PPTX export)
+
+**Completed this session (committed b8301ef):**
+- [x] Task 1: CFO returns extraction (header-resolved)
+  - New `underwrite/engine/read_cfo.py` — scans CFO sheet for header substrings,
+    resolves columns dynamically (not hardcoded letters), extracts unlevered/levered IRR/EM/CoC/Profit/Equity
+  - Modified `underwrite/adapter.py` to call extract_cfo_returns in run_mode_b,
+    appends cfo block to returns (persists automatically via DealStore.update)
+
+- [x] Task 2: Showcase enrichment at ingestion
+  - New `extractor/showcase_enrichment.py` — LLM extraction of headline, KPIs,
+    rationale/business bullets; PyMuPDF image extraction (top 3 largest, filters logos);
+    postcodes.io geocoding; re-ingest protection (preserves analyst edits)
+  - New `extractor/showcase_routes.py` — CRUD routes (GET/PATCH /showcase, image upload, regenerate)
+  - Modified `extractor/server.py` — wires showcase routes, mounts StaticFiles at /showcase-img,
+    calls showcase enrichment in process_pdf pipeline
+  - Modified `extractor/persistence.py` — adds showcase: None to create_deal_record
+
+- [x] Task 3: API showcase endpoints (implicit in Task 2)
+  - showcase_routes.py implements GET /deals/{id}/showcase, PATCH (with merge + edit tracking),
+    POST image upload, POST regenerate
+
+- [x] Task 4: Frontend deal profile page
+  - New `src/pages/DealProfilePage.tsx` — full-width editable card page with
+    Overview tab (KPI grid, rationale/business bullets, Mapbox map, asset photo) and
+    Financial Overview tab (CFO returns, withheld state if no passed run)
+  - New `src/components/showcase/` — EditableField (click-to-edit), SectionBand (purple headers),
+    KpiStrip (2×4 editable grid), MapCard (Mapbox with draggable pin), PhotoCard
+  - New `src/theme/brand.ts` — color tokens (single source for app + PPTX export)
+  - Modified `src/store/useDealStore.ts` — added showcase type to DealRecord,
+    added patchShowcase store action
+  - Modified `tailwind.config.js` — brand color tokens
+  - Modified `src/App.tsx` — added /pipeline/:dealId route
+  - Route `/pipeline/:dealId` fully functional; edits persist on reload
+
+- [x] Task 5: PPTX export
+  - New `extractor/pptx_builder.py` — programmatic slide generation via python-pptx;
+    optional pipeline summary table, per-deal Overview slide (KPI grid, bullets, map pin,
+    asset photo), Financial Overview (assumptions + unlevered/levered returns);
+    brand.json color consistency
+  - New `extractor/export_routes.py` — POST /export/deck endpoint → PPTX FileResponse
+  - Modified `extractor/server.py` — wires export router
+
+- [x] Task 6-7 (partial):
+  - Modified `package.json` — added concurrently, npm run app script
+    (kills stray processes, starts extractor + webpack)
+  - Modified `extractor/requirements.txt` — added pymupdf, python-pptx, requests
+
+**Not yet done (next session):**
+- [ ] Task 6: Mapping-correction UI in UnderwritingPanel
+  - Replace read-only mapping JSON with editable table (schema field → dropdown of source columns)
+  - Call confirm-mapping endpoint on Save → Mode A re-runs with corrected mapping
+  - Maps available columns from sample_rows for dropdown
+- [ ] Task 7: Final verification
+  - Install deps: pip install -r extractor/requirements.txt && npm install
+  - Test npm run app: cold start → both services running
+  - Upload IM → showcase enriched (images, KPIs, geocode)
+  - Export PPTX → opens in PowerPoint with editable text
+
+**Gotchas & notes:**
+- read_cfo.py returns None if any header fails to resolve (flag-don't-fabricate);
+  caller sets cfo_extraction_failed check flag
+- Showcase re-ingest: if edited_by_analyst=true, only fills null fields (preserves edits)
+- DealProfilePage financial tab shows "Returns withheld — checks not passed" if no passed run with cfo
+- PPTX builder uses python-pptx (real shapes, not images); map placeholder "TBC" if mapbox_token absent
+- Brand colors exported to src/theme/brand.ts AND extractor/brand.json (single source)
+
+**Key files modified/created:**
+New: underwrite/engine/read_cfo.py, extractor/showcase_enrichment.py, extractor/showcase_routes.py,
+     extractor/export_routes.py, extractor/pptx_builder.py, extractor/brand.json,
+     src/pages/DealProfilePage.tsx, src/components/showcase/*.tsx, src/theme/brand.ts
+
+Modified: underwrite/adapter.py, extractor/server.py, extractor/persistence.py,
+          extractor/requirements.txt, src/store/useDealStore.ts, tailwind.config.js,
+          src/App.tsx, package.json
+
+Commit: `b8301ef Deal showcase, editable cards & PPTX export — Tasks 1-5 + partial 6-7`
+
+---
+
+## Previous Session Handover — 2026-06-10 (Underwrite UI improvements)
 
 **Completed this session (committed):**
 - [x] Task 1: Split Underwrite into its own sidebar tab
