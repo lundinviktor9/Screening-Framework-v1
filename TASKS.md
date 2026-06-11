@@ -1,7 +1,61 @@
 # TASKS — Brunswick Screening Framework
 
 ## Last Updated
-11 June 2026 (night) — Phase 0 fixes landed + UI Overhaul Phase 1 (design system + shell) complete
+11 June 2026 (night) — UI Overhaul Phase 2 in progress: pages 2.1–2.4 redesigned
+
+## Session Handover — 2026-06-11 (Night, pt.3) — Phase 2 page redesigns (2.1–2.4)
+
+Continued the UI overhaul into Phase 2 (per-page redesigns on the Phase 1 design system).
+Four pages done this stretch, each built + headless-verified (own Edge instance via CDP,
+zero console errors) + committed:
+
+- **2.1 Pipeline** (`d14174f`): TanStack DataTable (sortable/filterable; Asset, Market, Age,
+  Tenants, Occupancy, Quoting Price, NIY, RY, On/Off, Status, Comment), row-selection
+  checkboxes → "Export deck (.pptx)" toolbar (downloads from /export/deck), status Badges,
+  inline edit via Popover/Select, row click → Deal Profile, global search. Card dropzone with
+  progress + success toast. DealMap pins recoloured by status. Empty state. Vendored ui:
+  table, checkbox, input, popover, select, label.
+- **2.2 Underwrite** (`4d894cc`): master/detail (left deal list w/ status Badge + latest IRR;
+  right 4-step Stepper: Upload → Mapping&Flags → Assumptions → Run&results). Step 2 editable
+  mapping + flags-as-alerts + sign-off checkboxes; Step 3 gap-overrides first + model dials in
+  Accordion; Step 4 returns metric cards + pass/withheld banner + run-history tracker squares +
+  per-version Accordion (vs-baseline diffs, model download). Deep-link via ?deal=<id>. Pipeline
+  "Underwrite" action now navigates here (drawer dropped from Pipeline). Vendored ui: accordion.
+- **2.3 Deal Profile** (`9f11fef`): brand tokens + sticky action bar (Edit toggle gating
+  showcase fields, Export this deal .pptx, Open IM PDF, Back). Financial view now reads the
+  LATEST passed run (was first/baseline). Deep-link fix: hydrates store on direct open.
+- **2.4 Home** (`aa1065a`): hero → 4 brand metric cards; pillar 6-up grid with weight badges +
+  restrained brand-family accents (replaced rainbow); CTA row → Buttons; capabilities + top-5
+  retoned. Trimmed methodology blocks (live on Data Sources).
+
+### Vendored shadcn ui inventory (src/components/ui/)
+button, badge, card, separator, tooltip, breadcrumb, alert-dialog, skeleton, sonner, confirm,
+table, checkbox, input, popover, select, label, accordion. `components.json` lets
+`npx shadcn@latest add <comp>` add more.
+
+### Remaining Phase 2 pages (next)
+- **2.5 Rankings** — TanStack DataTable, sticky header, tier Badges, composite as inline
+  CategoryBar, expandable row → per-pillar breakdown (BarList), CSV export.
+- **2.6 Sensitivity** — sliders in per-pillar Accordions, live-sum=100 indicator, scenario
+  save/load, Biggest Movers list.
+- **2.7 Dashboard** · **2.8 Map** · **2.9 Data Entry / Data Sources / Add Market**.
+
+### Verification method (reuse this)
+Start extractor (:8787) + `webpack serve` (:5173) + own headless Edge:
+`msedge --headless=new --remote-debugging-port=93NN --remote-allow-origins=* --user-data-dir=<tmp>`,
+drive via CDP websocket (python `websocket-client`, `suppress_origin=True`). Kill test procs by
+PID/port — NOT `taskkill //IM msedge.exe` (that closes the user's real browser too).
+NOTE: Chromium `innerText` applies CSS text-transform, so case-sensitive regex on uppercased
+headings gives false negatives — assert on other signals.
+
+### Carryover gotchas
+- Build is babel-loader (no typecheck). `tsconfig.app.json` still has ~15 pre-existing type
+  errors (not from new code). Tremor installed but NOT yet wired into Tailwind content — the
+  underwrite/returns "metric cards" are hand-built brand components, not Tremor; wire Tremor's
+  content path + color tokens before using its Tracker/charts in 2.7.
+- `extractor/underwrite_runs/**/lo_profile/` is gitignored.
+
+---
 
 ## Session Handover — 2026-06-11 (Night, pt.2) — Phase 0 fixes + Phase 1 foundation
 
