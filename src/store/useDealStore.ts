@@ -18,6 +18,25 @@ export interface DealRecord {
     display_returns?: boolean;
     [k: string]: any;
   } | null;
+  showcase?: {
+    headline?: string | null;
+    kpis?: {
+      tenure?: string;
+      units?: number;
+      lettable_area_sqft?: number;
+      occupancy_pct?: number;
+      passing_rent_psf?: number;
+      capital_value_psf?: number;
+      niy_pct?: number;
+      ry_pct?: number;
+      purchase_price?: number;
+    } | null;
+    rationale_bullets?: { label: string; text: string }[];
+    business_plan_bullets?: string[];
+    images?: { file: string; selected: boolean }[];
+    location?: { address?: string; postcode?: string; lat?: number; lng?: number } | null;
+    provenance?: { generated_from: string; generated_at: string; edited_by_analyst: boolean };
+  } | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -37,6 +56,9 @@ export interface DealStore {
 
   // Market override
   overrideMarket: (dealId: string, marketIds: string[]) => Promise<void>;
+
+  // Showcase patch
+  patchShowcase: (dealId: string, updates: Partial<DealRecord['showcase']>) => Promise<void>;
 
   // Filters
   setFilters: (filters: DealFilters) => void;
@@ -126,6 +148,22 @@ export const useDealStore = create<DealStore>((set, get) => ({
       if (!response.ok) throw new Error('Failed to override market');
       const updated = await response.json();
       get().updateDeal(dealId, updated);
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : 'Unknown error' });
+      throw err;
+    }
+  },
+
+  patchShowcase: async (dealId, updates) => {
+    try {
+      const response = await fetch(`${API_BASE}/deals/${dealId}/showcase`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+      if (!response.ok) throw new Error('Failed to update showcase');
+      const showcase = await response.json();
+      get().updateDeal(dealId, { showcase });
     } catch (err) {
       set({ error: err instanceof Error ? err.message : 'Unknown error' });
       throw err;

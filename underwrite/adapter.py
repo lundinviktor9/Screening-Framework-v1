@@ -302,11 +302,21 @@ def run_mode_b(
     except Exception as e:
         raise UnderwriteError(f"post-recalc processing failed: {e}")
 
+    # Extract CFO returns with header-resolved columns
+    from underwrite.engine.read_cfo import extract_cfo_returns
+    cfo_block = extract_cfo_returns(recalced)
+
     checks = {
         "pass": bool(tieout_ok and err_cells == 0),
         "anchor_tieout_ok": tieout_ok,
         "workbook_error_cells": err_cells,
     }
+    if cfo_block is None:
+        checks["cfo_extraction_failed"] = True
+
+    if cfo_block is not None:
+        returns["cfo"] = cfo_block
+
     return {
         "deal_id": deal_id,
         "mode": "B",

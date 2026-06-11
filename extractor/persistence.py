@@ -206,6 +206,8 @@ def create_deal_record(
         "microlocation_fit_score": profile.get("microlocation_fit_score", 0),
         "microlocation_narrative": profile.get("microlocation_narrative", ""),
         "narrative_detail": profile.get("narrative_detail", {}),
+        # Showcase (editable deal card data) — populated at ingestion
+        "showcase": None,
     }
 
     return record

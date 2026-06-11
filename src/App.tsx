@@ -10,6 +10,7 @@ import DataSourcesPage from './pages/DataSourcesPage';
 import ComparePage from './pages/ComparePage';
 import PipelinePage from './pages/PipelinePage';
 import UnderwritePage from './pages/UnderwritePage';
+import DealProfilePage from './pages/DealProfilePage';
 import MarketPrintPage from './pages/MarketPrintPage';
 import LandingPage from './pages/LandingPage';
 
@@ -31,6 +32,7 @@ export default function App() {
           <Route path="/sources"       element={<DataSourcesPage />} />
           <Route path="/compare"       element={<ComparePage />} />
           <Route path="/pipeline"      element={<PipelinePage />} />
+          <Route path="/pipeline/:dealId"  element={<DealProfilePage />} />
           <Route path="/underwrite"    element={<UnderwritePage />} />
         </Route>
       </Routes>

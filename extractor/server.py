@@ -43,6 +43,9 @@ from extractor.market_matcher import MarketMatcher
 from extractor.profile_generator import ProfileGenerator
 from extractor.persistence import DealStore, create_deal_record, DealStore
 from extractor.underwrite_routes import make_underwrite_router
+from extractor.showcase_routes import make_showcase_router
+from extractor.export_routes import make_export_router
+from extractor.showcase_enrichment import extract_showcase, extract_images, geocode_postcode
 
 # Initialize FastAPI
 app = FastAPI(
@@ -87,9 +90,24 @@ store = DealStore(str(DEALS_JSON))
 # Underwrite stage (Mode A/B) — shares the single DealStore instance.
 app.include_router(make_underwrite_router(store))
 
+# Showcase routes (CRUD for editable deal cards)
+app.include_router(make_showcase_router(store))
+
+# Export routes (PPTX deck generation)
+app.include_router(make_export_router(store))
+
 # PDF storage (for /pdf/{deal_id} endpoint)
 PDFS_DIR = REPO_ROOT / "extractor" / "pdfs_ingested"
 PDFS_DIR.mkdir(exist_ok=True)
+
+# Showcase images static files
+SHOWCASE_IMG_DIR = Path(os.environ.get("SHOWCASE_IMG_DIR", "extractor/showcase_img"))
+SHOWCASE_IMG_DIR.mkdir(parents=True, exist_ok=True)
+from fastapi.staticfiles import StaticFiles
+try:
+    app.mount("/showcase-img", StaticFiles(directory=str(SHOWCASE_IMG_DIR)), name="showcase_images")
+except Exception:
+    pass  # Silently continue if mount fails
 
 
 class MarketOverride(BaseModel):
@@ -183,6 +201,32 @@ def process_pdf(
         # Store PDF for later retrieval via /pdf/{deal_id}
         pdf_copy = PDFS_DIR / f"{deal_record['deal_id']}.pdf"
         pdf_copy.write_bytes(pdf_bytes)
+
+        # Enrich showcase (investment highlights, asset photos, location)
+        try:
+            # Check for existing edited showcase (re-ingest protection)
+            existing_deal = store.read_by_id(deal_record['deal_id'])
+            existing_showcase = existing_deal.get("showcase") if existing_deal else None
+
+            # Extract showcase from IM text
+            showcase = extract_showcase(text, deal_record['deal_id'], existing_showcase)
+
+            # Extract asset images from PDF
+            images = extract_images(pdf_path, deal_record['deal_id'], SHOWCASE_IMG_DIR)
+            showcase["images"] = images
+
+            # Geocode postcode if present
+            postcode = showcase.get("location", {}).get("postcode")
+            if postcode:
+                lat, lng = geocode_postcode(postcode)
+                if showcase.get("location"):
+                    showcase["location"]["lat"] = lat
+                    showcase["location"]["lng"] = lng
+
+            deal_record["showcase"] = showcase
+        except Exception as e:
+            # Showcase enrichment failure doesn't block pipeline
+            errors.append(f"Showcase enrichment failed: {str(e)}")
 
         return deal_record, errors
 
