@@ -1,7 +1,11 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Plus, Download, Upload, RotateCcw, GitCompare } from 'lucide-react';
 import { useMarketStore } from '../store/marketStore';
 import { confirmDialog } from '@/components/ui/confirm';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { exportToCSV, parseImportedCSV } from '../utils/csvImportExport';
 import RankingsTable from '../components/rankings/RankingsTable';
 import type { ScoredMarket, PipelineStatus } from '../types';
@@ -225,83 +229,54 @@ export default function RankingsPage() {
     <div className="p-8">
       {/* Headline stats strip */}
       <div className="mb-6">
-        <div className="flex items-start justify-between mb-4">
+        <div className="mb-4 flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">UK Industrial Market Screening</h1>
-            <p className="text-gray-500 text-sm mt-1">
+            <h1 className="text-2xl font-semibold text-foreground">Rankings</h1>
+            <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
               {ranked.length} markets · 6 pillars · 60 metrics
-              {masterDataDate && (
-                <span className="ml-2 inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
-                  Data updated: {masterDataDate}
-                </span>
-              )}
-            </p>
+              {masterDataDate && <Badge variant="success">Data updated: {masterDataDate}</Badge>}
+            </div>
           </div>
-          <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={() => setCompareMode(m => !m)}
-              className={`px-3 py-2.5 rounded-lg text-sm font-semibold border transition-colors ${
-                compareMode ? 'text-white' : 'text-purple-700'
-              }`}
-              style={compareMode
-                ? { background: '#3B1F6B', borderColor: '#3B1F6B' }
-                : { borderColor: '#3B1F6B', background: 'white' }}
-            >
-              {compareMode ? `Comparing ${compareIds.size}/5` : 'Compare markets'}
-            </button>
-            <button onClick={handleReset} className="px-3 py-2.5 rounded-lg text-sm font-medium text-gray-500 border border-gray-200 hover:bg-gray-50 transition-colors">Reset to defaults</button>
-            <button onClick={handleExport} className="px-3 py-2.5 rounded-lg text-sm font-medium border transition-colors" style={{ color: '#3B1F6B', borderColor: '#3B1F6B', background: 'transparent' }} title="Download all markets as a CSV file you can edit in Excel">Export CSV</button>
-            <button onClick={handleImportClick} className="px-3 py-2.5 rounded-lg text-sm font-medium border transition-colors" style={{ color: '#3B1F6B', borderColor: '#3B1F6B', background: 'transparent' }} title="Upload a filled CSV to update metric values across all markets">Import CSV</button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant={compareMode ? 'default' : 'outline'} onClick={() => setCompareMode((m) => !m)}>
+              <GitCompare />
+              {compareMode ? `Comparing ${compareIds.size}/5` : 'Compare'}
+            </Button>
+            <Button variant="ghost" onClick={handleReset}>
+              <RotateCcw /> Reset
+            </Button>
+            <Button variant="outline" onClick={handleExport} title="Download all markets as CSV">
+              <Download /> Export CSV
+            </Button>
+            <Button variant="outline" onClick={handleImportClick} title="Upload a filled CSV to update values">
+              <Upload /> Import CSV
+            </Button>
             <input ref={fileInputRef} type="file" accept=".csv" className="hidden" onChange={handleFileChange} />
-            <button onClick={() => navigate('/add')} className="px-4 py-2.5 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90" style={{ background: '#3B1F6B' }}>+ Add Market</button>
+            <Button onClick={() => navigate('/add')}>
+              <Plus /> Add Market
+            </Button>
           </div>
         </div>
 
         {/* Import result toast */}
         {importMsg && (
           <div
-            className="mb-4 px-4 py-3 rounded-lg text-sm font-medium"
-            style={{
-              background: importMsg.ok ? '#f0fdf4' : '#fffbeb',
-              border: `1px solid ${importMsg.ok ? '#bbf7d0' : '#fde68a'}`,
-              color: importMsg.ok ? '#15803d' : '#b45309',
-            }}
+            className={cn(
+              'mb-4 rounded-lg border px-4 py-3 text-sm font-medium',
+              importMsg.ok ? 'border-success/30 bg-success/10 text-success' : 'border-warning/30 bg-warning/10 text-warning'
+            )}
           >
             {importMsg.text}
           </div>
         )}
 
         {/* Summary numbers */}
-        <div className="grid grid-cols-5 gap-3 mb-4">
-          <StatCard label="Markets" value={String(ranked.length)} sub={`across ${uniqueRegions} regions`} colour="#3B1F6B" bg="#faf5ff" />
-          <StatCard
-            label="Tier 1 — Core"
-            value={String(tierCounts.t1)}
-            sub="≥ 80"
-            colour="#15803d"
-            bg="#f0fdf4"
-            active={tierFilter === 't1'}
-            onClick={() => setTierFilter(tierFilter === 't1' ? 'all' : 't1')}
-          />
-          <StatCard
-            label="Tier 2 — Value-add"
-            value={String(tierCounts.t2)}
-            sub="60–79"
-            colour="#b45309"
-            bg="#fffbeb"
-            active={tierFilter === 't2'}
-            onClick={() => setTierFilter(tierFilter === 't2' ? 'all' : 't2')}
-          />
-          <StatCard
-            label="Tier 3 — Monitor"
-            value={String(tierCounts.t3)}
-            sub="< 60"
-            colour="#b91c1c"
-            bg="#fef2f2"
-            active={tierFilter === 't3'}
-            onClick={() => setTierFilter(tierFilter === 't3' ? 'all' : 't3')}
-          />
-          <StatCard label="Mean score" value={meanScore.toFixed(1)} sub="all markets" colour="#4b5563" bg="#f9fafb" />
+        <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <StatCard label="Markets" value={String(ranked.length)} sub={`across ${uniqueRegions} regions`} tone="brand" />
+          <StatCard label="Tier 1 — Core" value={String(tierCounts.t1)} sub="≥ 80" tone="success" active={tierFilter === 't1'} onClick={() => setTierFilter(tierFilter === 't1' ? 'all' : 't1')} />
+          <StatCard label="Tier 2 — Value-add" value={String(tierCounts.t2)} sub="60–79" tone="warning" active={tierFilter === 't2'} onClick={() => setTierFilter(tierFilter === 't2' ? 'all' : 't2')} />
+          <StatCard label="Tier 3 — Monitor" value={String(tierCounts.t3)} sub="< 60" tone="danger" active={tierFilter === 't3'} onClick={() => setTierFilter(tierFilter === 't3' ? 'all' : 't3')} />
+          <StatCard label="Mean score" value={meanScore.toFixed(1)} sub="all markets" tone="muted" />
         </div>
       </div>
 
@@ -455,12 +430,19 @@ export default function RankingsPage() {
 
 // ─── Stat card ────────────────────────────────────────────────────────────────
 
+const TONE: Record<string, string> = {
+  brand: 'text-primary',
+  success: 'text-success',
+  warning: 'text-warning',
+  danger: 'text-danger',
+  muted: 'text-muted-foreground',
+};
+
 function StatCard(props: {
   label: string;
   value: string;
   sub: string;
-  colour: string;
-  bg: string;
+  tone: keyof typeof TONE;
   active?: boolean;
   onClick?: () => void;
 }) {
@@ -468,19 +450,17 @@ function StatCard(props: {
   return (
     <div
       onClick={props.onClick}
-      className={`rounded-xl px-4 py-3 border transition-all ${
-        isClickable ? 'cursor-pointer hover:shadow-md' : ''
-      } ${props.active ? 'ring-2 ring-offset-1' : ''}`}
-      style={{
-        background: props.bg,
-        borderColor: props.active ? props.colour : 'transparent',
-      }}
+      className={cn(
+        'rounded-lg border bg-card px-4 py-3 shadow-sm transition-all',
+        isClickable && 'cursor-pointer hover:shadow-md',
+        props.active && 'ring-2 ring-primary ring-offset-1'
+      )}
     >
       <div className="flex items-baseline gap-2">
-        <div className="text-2xl font-bold" style={{ color: props.colour }}>{props.value}</div>
-        <div className="text-xs text-gray-400">{props.sub}</div>
+        <div className={cn('text-2xl font-bold tabular-nums', TONE[props.tone])}>{props.value}</div>
+        <div className="text-xs text-muted-foreground">{props.sub}</div>
       </div>
-      <div className="text-xs font-semibold text-gray-700 mt-0.5">{props.label}</div>
+      <div className="mt-0.5 text-xs font-semibold text-foreground">{props.label}</div>
     </div>
   );
 }
