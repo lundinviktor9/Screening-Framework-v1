@@ -78,38 +78,38 @@ export function BiggestMovers() {
 
   return (
     <div className="space-y-3">
-      {/* Heading */}
       <div>
-        <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Biggest Movers vs Default</h2>
-        <p className="text-xs text-gray-500 mt-1">Markets with rank shifts of 2+ positions</p>
+        <h2 className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
+          Biggest movers vs default
+        </h2>
+        <p className="mt-1 text-xs text-muted-foreground">Markets with rank shifts of 2+ positions</p>
       </div>
 
-      {/* No movement state */}
       {!hasMovement && (
-        <div className="bg-white border border-gray-100 rounded-lg px-4 py-6 text-center">
-          <p className="text-sm text-gray-500">No significant movement from Default</p>
+        <div className="rounded-lg border bg-card px-4 py-6 text-center">
+          <p className="text-sm text-muted-foreground">No significant movement from default</p>
         </div>
       )}
 
-      {/* Risers and Fallers columns */}
       {hasMovement && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {/* Risers */}
-          <div className="border border-green-100 rounded-lg overflow-hidden bg-white">
-            <div className="bg-green-50 border-b border-green-100 px-4 py-2.5">
-              <h3 className="text-sm font-bold text-green-700">▲ Risers ({risers.length})</h3>
+          <div className="overflow-hidden rounded-lg border bg-card">
+            <div className="border-b bg-success/10 px-4 py-2.5">
+              <h3 className="text-sm font-semibold text-success">▲ Risers ({risers.length})</h3>
             </div>
-            <div className="divide-y divide-gray-100">
-              {risers.map(m => (
-                <div key={m.market.id} className="px-4 py-2.5 hover:bg-green-50 transition-colors">
+            <div className="divide-y">
+              {risers.map((m) => (
+                <div key={m.market.id} className="px-4 py-2.5 transition-colors hover:bg-success/5">
                   <div className="flex items-baseline justify-between gap-2">
-                    <span className="font-semibold text-gray-900 text-sm">{m.market.name}</span>
-                    <span className="text-xs font-semibold text-green-600 tabular-nums">
-                      #{m.currentRank} <span className="text-gray-400">(was #{m.defaultRank})</span>
+                    <span className="text-sm font-semibold text-foreground">{m.market.name}</span>
+                    <span className="text-xs font-semibold tabular-nums text-success">
+                      #{m.currentRank} <span className="text-muted-foreground">(was #{m.defaultRank})</span>
                     </span>
                   </div>
-                  <div className="text-xs text-gray-500 mt-0.5">
-                    Score: {m.currentScore.toFixed(1)} <span className="text-green-600 font-medium">+{m.scoreChange.toFixed(1)}</span>
+                  <div className="mt-0.5 text-xs text-muted-foreground">
+                    Score: {m.currentScore.toFixed(1)}{' '}
+                    <span className="font-medium text-success">+{m.scoreChange.toFixed(1)}</span>
                   </div>
                 </div>
               ))}
@@ -117,21 +117,22 @@ export function BiggestMovers() {
           </div>
 
           {/* Fallers */}
-          <div className="border border-red-100 rounded-lg overflow-hidden bg-white">
-            <div className="bg-red-50 border-b border-red-100 px-4 py-2.5">
-              <h3 className="text-sm font-bold text-red-700">▼ Fallers ({fallers.length})</h3>
+          <div className="overflow-hidden rounded-lg border bg-card">
+            <div className="border-b bg-danger/10 px-4 py-2.5">
+              <h3 className="text-sm font-semibold text-danger">▼ Fallers ({fallers.length})</h3>
             </div>
-            <div className="divide-y divide-gray-100">
-              {fallers.map(m => (
-                <div key={m.market.id} className="px-4 py-2.5 hover:bg-red-50 transition-colors">
+            <div className="divide-y">
+              {fallers.map((m) => (
+                <div key={m.market.id} className="px-4 py-2.5 transition-colors hover:bg-danger/5">
                   <div className="flex items-baseline justify-between gap-2">
-                    <span className="font-semibold text-gray-900 text-sm">{m.market.name}</span>
-                    <span className="text-xs font-semibold text-red-600 tabular-nums">
-                      #{m.currentRank} <span className="text-gray-400">(was #{m.defaultRank})</span>
+                    <span className="text-sm font-semibold text-foreground">{m.market.name}</span>
+                    <span className="text-xs font-semibold tabular-nums text-danger">
+                      #{m.currentRank} <span className="text-muted-foreground">(was #{m.defaultRank})</span>
                     </span>
                   </div>
-                  <div className="text-xs text-gray-500 mt-0.5">
-                    Score: {m.currentScore.toFixed(1)} <span className="text-red-600 font-medium">{m.scoreChange.toFixed(1)}</span>
+                  <div className="mt-0.5 text-xs text-muted-foreground">
+                    Score: {m.currentScore.toFixed(1)}{' '}
+                    <span className="font-medium text-danger">{m.scoreChange.toFixed(1)}</span>
                   </div>
                 </div>
               ))}

@@ -1,141 +1,132 @@
+import { RotateCcw } from 'lucide-react';
+
 import { useMarketStore } from '../store/marketStore';
 import type { Pillar } from '../types/index';
 import { PILLARS } from '../data/metrics';
 import { MetricSensitivity } from '../components/sensitivity/MetricSensitivity';
 import { BiggestMovers } from '../components/sensitivity/BiggestMovers';
 import { ScenarioManager } from '../components/sensitivity/ScenarioManager';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Slider } from '@/components/ui/slider';
 
-// ─── Default weights ──────────────────────────────────────────────────────────
 const DEFAULT_WEIGHTS = [17, 17, 17, 17, 16, 16];
 
-// ─── Pillar slider ─────────────────────────────────────────────────────────────
-interface SliderProps {
-  index: number;
-  name: string;
-  colour: string;
-  value: number;
-  onChange: (idx: number, val: number) => void;
-}
+const PILLAR_ACCENT: Record<string, string> = {
+  Supply: '#7D5A7D',
+  Demand: '#5A7D6F',
+  Connectivity: '#5A6E7D',
+  Labour: '#7D6E5A',
+  'Rents & Yields': '#6F5A7D',
+  'Strategic / Risk': '#7D5A6E',
+};
 
-function PillarSlider({ index, name, colour, value, onChange }: SliderProps) {
+function PillarSlider({
+  name, accent, value, onChange,
+}: { name: string; accent: string; value: number; onChange: (val: number) => void }) {
   const pct = Math.round(value * 10) / 10;
   return (
-    <div className="flex flex-col gap-1 min-w-0">
+    <div className="flex min-w-0 flex-col gap-2">
       <div className="flex items-center justify-between gap-1">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <span
-            className="w-2 h-2 rounded-full flex-shrink-0"
-            style={{ background: colour }}
-          />
-          <span className="text-xs font-medium text-gray-700 truncate">{name}</span>
+        <div className="flex min-w-0 items-center gap-1.5">
+          <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: accent }} />
+          <span className="truncate text-xs font-medium text-foreground">{name}</span>
         </div>
-        <span
-          className="text-xs font-bold tabular-nums flex-shrink-0 ml-1"
-          style={{ color: colour }}
-        >
+        <span className="ml-1 shrink-0 text-xs font-bold tabular-nums" style={{ color: accent }}>
           {pct.toFixed(1)}%
         </span>
       </div>
-      <input
-        type="range"
+      <Slider
         min={0}
         max={100}
         step={0.5}
-        value={value}
-        onChange={e => onChange(index, Number(e.target.value))}
-        className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
-        style={{
-          accentColor: colour,
-          background: `linear-gradient(to right, ${colour} ${pct}%, #e5e7eb ${pct}%)`,
-        }}
+        value={[value]}
+        onValueChange={(v) => onChange(v[0])}
       />
     </div>
   );
 }
 
-
-// ─── Main page ────────────────────────────────────────────────────────────────
 export default function SensitivityPage() {
-  const currentScenario = useMarketStore(s => s.currentScenario);
-  const updatePillarWeights = useMarketStore(s => s.updatePillarWeights);
-  const resetToDefault = useMarketStore(s => s.resetToDefault);
+  const currentScenario = useMarketStore((s) => s.currentScenario);
+  const updatePillarWeights = useMarketStore((s) => s.updatePillarWeights);
+  const resetToDefault = useMarketStore((s) => s.resetToDefault);
 
-  const weights = PILLARS.map(p => currentScenario.pillarWeights[p.name as Pillar] ?? p.totalWeight);
+  const weights = PILLARS.map((p) => currentScenario.pillarWeights[p.name as Pillar] ?? p.totalWeight);
   const isDefault = weights.every((w, i) => Math.abs(w - DEFAULT_WEIGHTS[i]) < 0.01);
-
-  function handleSliderChange(idx: number, val: number) {
-    updatePillarWeights(PILLARS[idx].name as Pillar, val);
-  }
-
-  function handleReset() {
-    resetToDefault();
-  }
+  const sum = weights.reduce((a, b) => a + b, 0);
+  const sumOk = Math.abs(sum - 100) < 0.5;
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* ── Top bar ── */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100 bg-white flex-shrink-0">
+    <div className="flex h-full flex-col overflow-hidden">
+      {/* Top bar */}
+      <div className="flex shrink-0 items-center justify-between border-b bg-card px-6 py-3">
         <div>
-          <h1 className="text-base font-bold text-gray-900 leading-tight">Sensitivity Analysis</h1>
-          <p className="text-xs text-gray-400">
-            Adjust pillar weights to see how rankings change · weights always sum to 100%
+          <h1 className="text-lg font-semibold text-foreground">Sensitivity</h1>
+          <p className="text-xs text-muted-foreground">
+            Adjust pillar weights to see how rankings change.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={handleReset}
-            disabled={isDefault}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          {/* Live-sum indicator */}
+          <div
+            className={cn(
+              'rounded-full border px-3 py-1 text-xs font-semibold tabular-nums',
+              sumOk ? 'border-success/30 bg-success/10 text-success' : 'border-danger/30 bg-danger/10 text-danger'
+            )}
+            title="Pillar weights must sum to 100%"
           >
-            Reset to defaults
-          </button>
+            Σ {sum.toFixed(1)}% {sumOk ? '✓' : '— must equal 100%'}
+          </div>
+          <Button variant="outline" size="sm" onClick={resetToDefault} disabled={isDefault}>
+            <RotateCcw /> Reset
+          </Button>
         </div>
       </div>
 
-      {/* ── Scenario manager ── */}
       <ScenarioManager />
 
-      {/* ── Sliders panel ── */}
-      <div className="flex-shrink-0 bg-white border-b border-gray-100 px-6 py-4">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-6 gap-y-4">
-          {PILLARS.map((p, i) => (
+      {/* Sliders panel */}
+      <div className="shrink-0 border-b bg-card px-6 py-4">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:grid-cols-6">
+          {PILLARS.map((p) => (
             <PillarSlider
               key={p.name}
-              index={i}
               name={p.name}
-              colour={p.colour}
-              value={weights[i]}
-              onChange={handleSliderChange}
+              accent={PILLAR_ACCENT[p.name] || '#7D5A7D'}
+              value={weights[PILLARS.indexOf(p)]}
+              onChange={(val) => updatePillarWeights(p.name as Pillar, val)}
             />
           ))}
         </div>
 
         {/* Weight summary chips */}
-        <div className="flex gap-2 flex-wrap mt-3">
-          {PILLARS.map((p, i) => (
-            <div
-              key={p.name}
-              className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border"
-              style={{
-                color: p.colour,
-                borderColor: `${p.colour}40`,
-                background: `${p.colour}10`,
-              }}
-            >
-              <span>{p.name}</span>
-              <span className="font-bold tabular-nums">{Math.round(weights[i] * 10) / 10}%</span>
-              {!isDefault && Math.abs(weights[i] - DEFAULT_WEIGHTS[i]) > 0.05 && (
-                <span className="opacity-60">
-                  ({weights[i] > DEFAULT_WEIGHTS[i] ? '+' : ''}{(weights[i] - DEFAULT_WEIGHTS[i]).toFixed(1)})
-                </span>
-              )}
-            </div>
-          ))}
+        <div className="mt-4 flex flex-wrap gap-2">
+          {PILLARS.map((p, i) => {
+            const accent = PILLAR_ACCENT[p.name] || '#7D5A7D';
+            const delta = weights[i] - DEFAULT_WEIGHTS[i];
+            return (
+              <div
+                key={p.name}
+                className="flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs"
+                style={{ color: accent, borderColor: `${accent}40`, background: `${accent}14` }}
+              >
+                <span>{p.name}</span>
+                <span className="font-bold tabular-nums">{Math.round(weights[i] * 10) / 10}%</span>
+                {!isDefault && Math.abs(delta) > 0.05 && (
+                  <span className="opacity-60">
+                    ({delta > 0 ? '+' : ''}
+                    {delta.toFixed(1)})
+                  </span>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* ── Metric sensitivity + biggest movers ── */}
-      <div className="flex-1 overflow-y-auto bg-white border-b border-gray-100 px-6 py-4 space-y-6">
+      {/* Metric sensitivity + biggest movers */}
+      <div className="flex-1 space-y-6 overflow-y-auto bg-background px-6 py-4">
         <MetricSensitivity />
         <BiggestMovers />
       </div>
