@@ -5,6 +5,7 @@ import { scoreMetric } from '../utils/scoring';
 import type { MetricSource, MetricDef } from '../types';
 import DataEntryFilters, { type QuickFilter } from '../components/dataentry/DataEntryFilters';
 import MetricEntryRow from '../components/dataentry/MetricEntryRow';
+import { toast } from '@/components/ui/sonner';
 
 export default function DataEntryPage() {
   const markets = useMarketStore(s => s.markets);
@@ -71,6 +72,8 @@ export default function DataEntryPage() {
   function handleSave(metricId: number, value: number | null, source: MetricSource) {
     if (!selectedMarket) return;
     updateMetricValue(selectedMarket.id, metricId, value, source);
+    const metric = METRICS.find((m) => m.id === metricId);
+    toast.success(`Saved ${metric?.name ?? `M${metricId}`}`);
   }
 
   function handleCascade(
@@ -106,24 +109,24 @@ export default function DataEntryPage() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100 bg-white flex-shrink-0">
+      <div className="flex flex-shrink-0 items-center justify-between border-b bg-card px-6 py-3">
         <div>
-          <h1 className="text-lg font-bold text-gray-900">Data Entry</h1>
-          <p className="text-xs text-gray-400">
+          <h1 className="text-lg font-semibold text-foreground">Data Entry</h1>
+          <p className="text-xs text-muted-foreground">
             Enter and manage metric values with source verification
           </p>
         </div>
         {selectedMarket && (
           <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-muted-foreground">
               {completeness.filled}/{completeness.total} metrics populated
             </span>
-            <div className="w-24 h-2 rounded-full bg-gray-100 overflow-hidden">
+            <div className="h-2 w-24 overflow-hidden rounded-full bg-muted">
               <div
                 className="h-full rounded-full transition-all"
                 style={{
                   width: `${(completeness.filled / completeness.total) * 100}%`,
-                  background: completeness.filled / completeness.total >= 0.4 ? '#15803d' : '#b91c1c',
+                  background: completeness.filled / completeness.total >= 0.4 ? '#1B8A5A' : '#C53030',
                 }}
               />
             </div>
