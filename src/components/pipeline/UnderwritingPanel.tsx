@@ -40,6 +40,10 @@ export function UnderwritingPanel({ dealId }: Props) {
   const [ltv, setLtv] = useState('0');
   const [scenario, setScenario] = useState('1');
 
+  const [editingMapping, setEditingMapping] = useState(false);
+  const [mappingEdits, setMappingEdits] = useState<Record<string, string>>({});
+  const [mappingSaveBusy, setMappingSaveBusy] = useState(false);
+
   useEffect(() => {
     fetch(`${API_BASE}/underwrite/${dealId}`)
       .then(r => (r.ok ? r.json() : null))
@@ -56,6 +60,29 @@ export function UnderwritingPanel({ dealId }: Props) {
       const data = await r.json();
       setBlock(data); setMappingOk(false); setFlagsOk(false); setResolutions({});
     } catch (e: any) { setErr(e.message); } finally { setBusy(false); }
+  }
+
+  async function handleSaveMapping() {
+    if (!block?.mapping) return;
+    setMappingSaveBusy(true);
+    try {
+      const correctedMapping = { ...block.mapping };
+      if (correctedMapping.columns) {
+        Object.entries(mappingEdits).forEach(([k, v]) => {
+          correctedMapping.columns[k] = v;
+        });
+      }
+      const r = await fetch(`${API_BASE}/underwrite/${dealId}/confirm-mapping`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mapping: correctedMapping }),
+      });
+      if (!r.ok) throw new Error((await r.json()).detail || 'Failed to save mapping');
+      const data = await r.json();
+      setBlock(data);
+      setEditingMapping(false);
+      setMappingEdits({});
+      setMappingOk(false);
+    } catch (e: any) { setErr(e.message); } finally { setMappingSaveBusy(false); }
   }
 
   async function handleRun() {
@@ -130,10 +157,64 @@ export function UnderwritingPanel({ dealId }: Props) {
           )}
 
           {block?.mapping && (
-            <details className="text-xs">
-              <summary className="cursor-pointer font-semibold text-gray-600">Proposed column map</summary>
-              <pre className="mt-1 bg-gray-50 border rounded p-2 overflow-x-auto">{JSON.stringify(block.mapping.columns ?? block.mapping, null, 2)}</pre>
-            </details>
+            <div className="text-xs border rounded p-3 bg-white">
+              <div className="flex items-center justify-between mb-2">
+                <div className="font-semibold text-gray-600">Column mapping</div>
+                {!editingMapping && (
+                  <button onClick={() => { setEditingMapping(true); setMappingEdits({}); }}
+                    className="px-2 py-1 text-blue-600 hover:bg-blue-50 rounded">
+                    Edit
+                  </button>
+                )}
+              </div>
+              {!editingMapping ? (
+                <div className="space-y-1">
+                  {Object.entries(block.mapping.columns || {}).map(([schema, col]: any) => (
+                    <div key={schema} className="flex justify-between gap-2 bg-gray-50 p-1 rounded">
+                      <span className="text-gray-600">{schema}</span>
+                      <span className="font-medium text-right text-gray-900">{col}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="bg-blue-50 border border-blue-200 rounded p-2 mb-2">
+                    <div className="font-medium text-blue-900">Edit column assignments</div>
+                    <div className="text-blue-700 text-xs mt-0.5">Select which source column maps to each schema field</div>
+                  </div>
+                  {block?.sample_rows?.[0] && (
+                    <div>
+                      {Object.keys(block.mapping.columns || {}).map((schema: string) => {
+                        const currentCol = mappingEdits[schema] ?? (block.mapping.columns?.[schema] || '');
+                        const availableCols = Object.keys(block.sample_rows[0] || {});
+                        return (
+                          <div key={schema} className="grid grid-cols-2 gap-2 mb-2">
+                            <div className="text-gray-600">{schema}</div>
+                            <select value={currentCol} onChange={(e) => setMappingEdits(s => ({ ...s, [schema]: e.target.value }))}
+                              className="border rounded px-1 py-0.5 bg-white text-gray-900">
+                              <option value="">(not mapped)</option>
+                              {availableCols.map(col => (
+                                <option key={col} value={col}>{col}</option>
+                              ))}
+                            </select>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <div className="flex gap-2 mt-3">
+                    <button onClick={handleSaveMapping} disabled={mappingSaveBusy}
+                      className="flex-1 px-2 py-1 rounded bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-300">
+                      {mappingSaveBusy ? 'Saving…' : 'Save mapping'}
+                    </button>
+                    <button onClick={() => { setEditingMapping(false); setMappingEdits({}); }}
+                      className="flex-1 px-2 py-1 rounded border border-gray-300 hover:bg-gray-50">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
 
           {block?.sample_rows?.length > 0 && (
