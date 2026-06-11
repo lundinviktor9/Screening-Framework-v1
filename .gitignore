@@ -45,3 +45,6 @@ boe_debug.html
 # Python
 __pycache__/
 *.pyc
+
+# Transient LibreOffice headless user-profile dumps from underwrite recalc runs
+extractor/underwrite_runs/**/lo_profile/

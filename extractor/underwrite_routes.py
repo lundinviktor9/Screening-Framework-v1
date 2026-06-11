@@ -85,6 +85,20 @@ FIELD_RATIONALE = {
                       "changes the entry price.",
 }
 
+# Gap-overrideable schedule fields: re-letting / valuation inputs that brokers often leave
+# blank per-unit and which legitimately take a deal-level default. Matched by DealRR COLUMN
+# LETTER (the canonical schema is fixed; header text carries a non-ASCII '£' that we avoid).
+# kind: "pct" values are entered as percentages in the UI and stored as decimals (÷100).
+GAP_FIELDS = [
+    {"field": "Exit Yield", "column": "I", "kind": "pct", "unit": "%"},
+    {"field": "ERV (psf)", "column": "U", "kind": "num", "unit": "£ psf"},
+    {"field": "Assumed Void (mths)", "column": "Y", "kind": "num", "unit": "mths"},
+    {"field": "Assumed Rent Free (mths)", "column": "Z", "kind": "num", "unit": "mths"},
+    {"field": "Re-letting Capex (psf)", "column": "AA", "kind": "num", "unit": "£ psf"},
+    {"field": "Term Certain (mths)", "column": "BC", "kind": "num", "unit": "mths"},
+]
+_GAP_BY_FIELD = {g["field"]: g for g in GAP_FIELDS}
+
 
 # ---------------------------------------------------------------- request bodies
 
@@ -98,6 +112,7 @@ class ConfirmMappingBody(BaseModel):
 
 class RunBody(BaseModel):
     assumptions: Dict[str, Any] = {}
+    gap_overrides: Dict[str, Any] = {}   # field -> deal-level default for blank schedule cells
     flag_resolutions: Optional[List[Dict[str, Any]]] = None
     mapping_signed_off: bool = False
     flags_signed_off: bool = False
@@ -212,6 +227,71 @@ def _sample_rows(rr_xlsx: str, rr_sheet: str = RR_SHEET, n: int = 3) -> List[Dic
     return out
 
 
+def _rr_data_rows(ws) -> List[int]:
+    """Row numbers carrying a unit (column E / Unit Number non-empty)."""
+    e = cix("E")
+    rows = []
+    for r in range(2, ws.max_row + 1):
+        if ws.cell(r, e).value not in (None, ""):
+            rows.append(r)
+    return rows
+
+
+def _compute_gaps(rr_xlsx: Optional[str], rr_sheet: str = RR_SHEET) -> List[Dict[str, Any]]:
+    """Per-field count of blank cells across the canonical RR's unit rows.
+
+    Returns one entry per GAP_FIELD: {field, column, kind, unit, missing, total}. `missing`==0
+    means the schedule is complete for that field (the UI disables its override input)."""
+    if not rr_xlsx or not Path(rr_xlsx).exists():
+        return []
+    try:
+        wb = openpyxl.load_workbook(rr_xlsx, data_only=True)
+    except Exception:
+        return []
+    if rr_sheet not in wb.sheetnames:
+        return []
+    ws = wb[rr_sheet]
+    data_rows = _rr_data_rows(ws)
+    total = len(data_rows)
+    out: List[Dict[str, Any]] = []
+    for g in GAP_FIELDS:
+        col = cix(g["column"])
+        missing = sum(1 for r in data_rows if ws.cell(r, col).value in (None, ""))
+        out.append({**g, "missing": missing, "total": total})
+    return out
+
+
+def _apply_gap_overrides(rr_xlsx: str, overrides: Dict[str, Any], dest: str,
+                         rr_sheet: str = RR_SHEET) -> List[str]:
+    """Fill BLANK unit cells of each overridden field with the analyst-supplied value, saving a
+    gap-filled copy to `dest`. Only empty cells are written (never overwrites broker data).
+    Returns audit notes. Values for kind=="pct" are divided by 100 (UI sends percentages)."""
+    wb = openpyxl.load_workbook(rr_xlsx)
+    ws = wb[rr_sheet]
+    data_rows = _rr_data_rows(ws)
+    notes: List[str] = []
+    for field, raw in (overrides or {}).items():
+        g = _GAP_BY_FIELD.get(field)
+        if g is None or raw in (None, ""):
+            continue
+        try:
+            val = float(raw)
+        except (TypeError, ValueError):
+            continue
+        if g["kind"] == "pct":
+            val = val / 100.0
+        col = cix(g["column"])
+        filled = 0
+        for r in data_rows:
+            if ws.cell(r, col).value in (None, ""):
+                ws.cell(r, col).value = val
+                filled += 1
+        if filled:
+            notes.append(f"gap override: filled {filled} blank {field} cell(s) with {raw}{g['unit']}")
+    wb.save(dest)
+    return notes
+
+
 def _normalise(raw_path: str, asset: str, region: str, out_xlsx: str,
                mapping: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     client = None
@@ -281,7 +361,7 @@ def make_underwrite_router(store) -> APIRouter:
             "units": block["units"], "mapping": block["mapping"],
             "mapping_confirmed": block["mapping_confirmed"],
             "sample_rows": _sample_rows(rr_xlsx), "flags": block["flags"],
-            "schema_errors": block["schema_errors"],
+            "schema_errors": block["schema_errors"], "gaps": _compute_gaps(rr_xlsx),
         }
 
     @router.post("/{deal_id}/confirm-mapping")
@@ -315,7 +395,7 @@ def make_underwrite_router(store) -> APIRouter:
             "deal_id": deal_id, "status": updated["status"], "mapping_confirmed": True,
             "units": updated["units"], "mapping": updated["mapping"],
             "sample_rows": _sample_rows(rr_xlsx), "flags": updated["flags"],
-            "schema_errors": updated["schema_errors"],
+            "schema_errors": updated["schema_errors"], "gaps": _compute_gaps(rr_xlsx),
         }
 
     @router.post("/{deal_id}/run")
@@ -344,8 +424,23 @@ def make_underwrite_router(store) -> APIRouter:
         region = body.region or block.get("region") or _defaults(deal)["region"]
 
         run_dir = _deal_dir(deal_id) / f"run_{datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}"
+        run_dir.mkdir(parents=True, exist_ok=True)
+
+        # Apply analyst gap overrides to a COPY of the canonical RR (blank cells only); the
+        # original schedule is never mutated. Pass the filled copy to Mode B.
+        gap_notes: List[str] = []
+        rr_for_run = rr_xlsx
+        if body.gap_overrides:
+            filled = run_dir / "gapfilled_rr.xlsx"
+            try:
+                gap_notes = _apply_gap_overrides(rr_xlsx, body.gap_overrides, str(filled))
+                if gap_notes:
+                    rr_for_run = str(filled)
+            except Exception as e:
+                raise HTTPException(status_code=422, detail=f"Gap-override fill failed: {e}")
+
         try:
-            result = uw.run_mode_b(deal_id, rr_xlsx, RR_SHEET, asset, region, entry,
+            result = uw.run_mode_b(deal_id, rr_for_run, RR_SHEET, asset, region, entry,
                                    assumptions=assumptions, workdir=str(run_dir))
         except Exception as e:
             import traceback as _tb
@@ -367,6 +462,8 @@ def make_underwrite_router(store) -> APIRouter:
 
         checks = result["checks"]
         passed = bool(checks.get("pass"))
+        # Combine engine assumption notes with gap-override audit notes.
+        all_assumption_notes = list(result.get("assumption_notes", [])) + gap_notes
 
         # ----- versioned audit record -----
         prior_runs = [r for r in (block.get("runs") or []) if r.get("type") != "mapping_correction"]
@@ -383,9 +480,10 @@ def make_underwrite_router(store) -> APIRouter:
             "vs_previous": _assumptions_diff(prev_assumptions, assumptions),
             "vs_baseline": _assumptions_diff((baseline or {}).get("assumptions"), assumptions),
             "flag_resolutions": body.flag_resolutions or [],
+            "gap_overrides": dict(body.gap_overrides or {}),
             "returns": result["returns"],
             "checks": checks,
-            "assumption_notes": result.get("assumption_notes", []),
+            "assumption_notes": all_assumption_notes,
             "note": body.note or "",
             "model_xlsx": str(model_dest),
             "passed": passed,
@@ -405,7 +503,7 @@ def make_underwrite_router(store) -> APIRouter:
             "assumptions": assumptions,
             "returns": result["returns"],
             "checks": checks,
-            "assumption_notes": result.get("assumption_notes", []),
+            "assumption_notes": all_assumption_notes,
             "model_xlsx": str(model_dest),
             "display_returns": passed,
             "latest_version": version,
@@ -415,7 +513,7 @@ def make_underwrite_router(store) -> APIRouter:
             "is_baseline": run_record["is_baseline"], "display_returns": passed,
             "returns": result["returns"], "checks": checks,
             "vs_baseline": run_record["vs_baseline"], "vs_previous": run_record["vs_previous"],
-            "assumption_notes": result.get("assumption_notes", []),
+            "assumption_notes": all_assumption_notes,
             "model_url": f"/underwrite/{deal_id}/model",
         }
 
@@ -425,7 +523,10 @@ def make_underwrite_router(store) -> APIRouter:
         block = deal.get("underwrite")
         if not block:
             raise HTTPException(status_code=404, detail=f"No underwrite for deal: {deal_id}")
-        return block
+        # Surface fresh per-field gap counts so the panel can render the gap-overrides section.
+        out = dict(block)
+        out["gaps"] = _compute_gaps(block.get("rr_xlsx"))
+        return out
 
     @router.get("/{deal_id}/history")
     def underwrite_history(deal_id: str) -> Dict[str, Any]:

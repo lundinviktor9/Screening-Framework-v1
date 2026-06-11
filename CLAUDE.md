@@ -1,6 +1,8 @@
 # Brunswick Industrial Real Estate Screening Framework
 ## Claude Code Persistent Context — Updated April 2026
 
+the repo lives at C:\Screening Framework and the old Dokument path is dead 
+
 > **Deal pipeline work:** For any work on the deal pipeline (incoming-deal ingestion, PDF extraction, Pipeline tab, deal profiling), read [DEAL_PIPELINE_INTEGRATION_PLAN.md](DEAL_PIPELINE_INTEGRATION_PLAN.md) first. That document defines the 7-task build order, data model, and UX.
 
 ---

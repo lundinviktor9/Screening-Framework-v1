@@ -7,8 +7,8 @@ Routes: POST /export/deck
 import os
 from datetime import datetime
 from typing import List
-from fastapi import APIRouter
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import Response
 from pydantic import BaseModel
 
 from extractor.persistence import DealStore
@@ -35,35 +35,34 @@ def make_export_router(store: DealStore) -> APIRouter:
         Returns:
             PPTX file download
         """
+        # Retrieve deals
+        all_deals = store.read_all()
+        selected_deals = [d for d in all_deals if d.get("deal_id") in body.deal_ids]
+
+        if not selected_deals:
+            raise HTTPException(status_code=400, detail="No deals selected")
+
+        # Get Mapbox token from env
+        mapbox_token = os.environ.get("MAPBOX_TOKEN")
+
+        # Build deck (build_deck returns the .pptx as raw bytes)
         try:
-            # Retrieve deals
-            all_deals = store.read_all()
-            selected_deals = [d for d in all_deals if d.get("deal_id") in body.deal_ids]
-
-            if not selected_deals:
-                return {"error": "No deals selected"}, 400
-
-            # Get Mapbox token from env
-            mapbox_token = os.environ.get("MAPBOX_TOKEN")
-
-            # Build deck
             deck_bytes = build_deck(
                 selected_deals,
                 include_pipeline_summary=body.include_pipeline_summary,
                 mapbox_token=mapbox_token,
             )
-
-            # Generate filename with date
-            now = datetime.utcnow()
-            filename = f"Brunswick_Pipeline_{now.strftime('%Y%m%d_%H%M%S')}.pptx"
-
-            return FileResponse(
-                iter([deck_bytes]),
-                media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-                filename=filename,
-            )
-
         except Exception as e:
-            return {"error": str(e)}, 500
+            raise HTTPException(status_code=500, detail=f"Deck build failed: {e}")
+
+        # Generate filename with date
+        now = datetime.utcnow()
+        filename = f"Brunswick_Pipeline_{now.strftime('%Y%m%d_%H%M%S')}.pptx"
+
+        return Response(
+            content=deck_bytes,
+            media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
 
     return router

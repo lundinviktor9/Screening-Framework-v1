@@ -32,6 +32,8 @@ export function UnderwritingPanel({ dealId }: Props) {
   const [analyst, setAnalyst] = useState('');
   const [changeNote, setChangeNote] = useState('');
 
+  const [gapOverrides, setGapOverrides] = useState<Record<string, string>>({}); // field -> value
+
   const [entryDate, setEntryDate] = useState('');
   const [holdYears, setHoldYears] = useState('5');
   const [entryYield, setEntryYield] = useState('');
@@ -98,6 +100,11 @@ export function UnderwritingPanel({ dealId }: Props) {
         entry_date: entryDate, hold_years: num(holdYears), entry_yield: dec(entryYield),
         exit_yield: dec(exitYield), rental_growth: dec(rentalGrowth), ltv: dec(ltv), scenario: num(scenario),
       };
+      // Only send overrides the analyst actually filled in (non-empty), for fields with gaps.
+      const gap_overrides: Record<string, number> = {};
+      Object.entries(gapOverrides).forEach(([field, v]) => {
+        if (v.trim() !== '') gap_overrides[field] = Number(v);
+      });
       const flag_resolutions = (block?.flags || []).map((f: Flag) => ({
         unit: f.unit, signal: f.signal, field: f.field,
         decision: 'reviewed', note: resolutions[flagKey(f)] || '',
@@ -105,7 +112,7 @@ export function UnderwritingPanel({ dealId }: Props) {
       const r = await fetch(`${API_BASE}/underwrite/${dealId}/run`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          assumptions, flag_resolutions, mapping_signed_off: mappingOk, flags_signed_off: flagsOk,
+          assumptions, gap_overrides, flag_resolutions, mapping_signed_off: mappingOk, flags_signed_off: flagsOk,
           analyst: analyst || null, note: changeNote || null,
         }),
       });
@@ -120,6 +127,7 @@ export function UnderwritingPanel({ dealId }: Props) {
   }
 
   const flags: Flag[] = block?.flags || [];
+  const gaps: any[] = block?.gaps || [];
   const hasUpload = !!block?.status;
   const checks = block?.checks;
   const showReturns = !!checks?.pass && block?.returns;
@@ -259,6 +267,43 @@ export function UnderwritingPanel({ dealId }: Props) {
             <label className="flex items-center gap-2"><input type="checkbox" checked={mappingOk} onChange={e => setMappingOk(e.target.checked)} /> Column mapping reviewed &amp; correct</label>
             <label className="flex items-center gap-2"><input type="checkbox" checked={flagsOk} onChange={e => setFlagsOk(e.target.checked)} /> Judgement flags reviewed &amp; resolved</label>
           </div>
+
+          {/* Gap overrides: deal-level defaults for schedule fields the broker left blank.
+              Each row is disabled when the schedule is complete for that field (0 gaps). */}
+          {gaps.length > 0 && (
+            <div className="text-xs border rounded p-3 bg-white">
+              <div className="font-semibold text-gray-600 mb-1">Gap overrides</div>
+              <div className="text-gray-500 mb-2">Fill missing per-unit values with a deal-level default. Blank cells only — broker data is never overwritten.</div>
+              <div className="space-y-2">
+                {gaps.map((g: any) => {
+                  const complete = g.missing === 0;
+                  return (
+                    <div key={g.field} className="grid grid-cols-2 gap-2 items-center">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-gray-700">{g.field}</span>
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${complete ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-800'}`}>
+                          {complete ? 'complete' : `${g.missing}/${g.total} missing`}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          step="any"
+                          disabled={complete}
+                          value={gapOverrides[g.field] ?? ''}
+                          onChange={e => setGapOverrides(s => ({ ...s, [g.field]: e.target.value }))}
+                          placeholder={complete ? '—' : `default ${g.unit}`}
+                          className={`w-full border rounded px-1 py-0.5 ${complete ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white'}`}
+                          title={complete ? 'Schedule complete for this field — nothing to override' : `Fill ${g.missing} blank cell(s) with this value (${g.unit})`}
+                        />
+                        <span className="text-gray-400 w-10 shrink-0">{g.unit}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="text-xs grid grid-cols-2 gap-2">
             <Field label="Entry date *"><input type="date" value={entryDate} onChange={e => setEntryDate(e.target.value)} className="w-full border rounded px-1 py-0.5" /></Field>

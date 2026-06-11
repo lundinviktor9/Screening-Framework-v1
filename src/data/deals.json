@@ -96,7 +96,7 @@
       }
     },
     "created_at": "2026-05-11T11:59:44.756422Z",
-    "updated_at": "2026-06-11T00:02:43.403021Z",
+    "updated_at": "2026-06-11T12:09:09.292363Z",
     "underwrite": {
       "status": "underwritten",
       "asset": "Canon Industrial Park",
@@ -448,7 +448,41 @@
             "equity_multiple": 1.65508822795602,
             "cash_on_cash": 0.070342580420627,
             "net_exit_price": 39.1044717988999,
-            "net_purchase_price": 24130876.2753455
+            "net_purchase_price": 24130876.2753455,
+            "cfo": {
+              "scenario_label": null,
+              "unlevered": {
+                "irr": 0.148573133984107,
+                "em": 1.88082276430859,
+                "coc_y5": 0.070342580420627,
+                "profit": 22.6395792392652,
+                "equity": 25.8347943070467
+              },
+              "levered": {
+                "irr": 0.115437683139766,
+                "em": 1.65508822795602,
+                "coc_y5": 0.0620200716509781,
+                "profit": 16.9456673842507,
+                "equity": 25.7027635486197
+              },
+              "assumptions_table": {
+                "net_purchase_price": 24130876.2753455
+              },
+              "source": {
+                "sheet": "Cash Flow Output",
+                "unlevered_col": "L",
+                "levered_col": "J",
+                "resolved_by": "label",
+                "row_map": {
+                  "equity": 16,
+                  "unlev_irr": 17,
+                  "lev_irr": 18,
+                  "em": 19,
+                  "coc": 20,
+                  "profit": 21
+                }
+              }
+            }
           },
           "checks": {
             "pass": true,
@@ -628,7 +662,41 @@
             "equity_multiple": 2.65641835245531,
             "cash_on_cash": 0.0706778407555396,
             "net_exit_price": 46.5607328382944,
-            "net_purchase_price": 24130876.2753455
+            "net_purchase_price": 24130876.2753455,
+            "cfo": {
+              "scenario_label": null,
+              "unlevered": {
+                "irr": 0.186982332823991,
+                "em": 2.17263145312844,
+                "coc_y5": 0.0706778407555396,
+                "profit": 30.1398689694346,
+                "equity": 25.8347943070467
+              },
+              "levered": {
+                "irr": 0.236031548055975,
+                "em": 2.65641835245531,
+                "coc_y5": 0.0694831488863882,
+                "profit": 19.0092374596857,
+                "equity": 11.2242377834124
+              },
+              "assumptions_table": {
+                "net_purchase_price": 24130876.2753455
+              },
+              "source": {
+                "sheet": "Cash Flow Output",
+                "unlevered_col": "L",
+                "levered_col": "J",
+                "resolved_by": "label",
+                "row_map": {
+                  "equity": 16,
+                  "unlev_irr": 17,
+                  "lev_irr": 18,
+                  "em": 19,
+                  "coc": 20,
+                  "profit": 21
+                }
+              }
+            }
           },
           "checks": {
             "pass": true,
@@ -641,16 +709,145 @@
           "note": "",
           "model_xlsx": "C:\\Screening Framework\\extractor\\underwrite_runs\\bef9beb3fedf43e5\\run_20260611T000105Z\\model.xlsx",
           "passed": true
+        },
+        {
+          "version": 3,
+          "type": "run",
+          "at": "2026-06-11T12:09:09.288811Z",
+          "analyst": "phase0-verify",
+          "is_baseline": false,
+          "assumptions": {
+            "entry_date": "2026-06-30",
+            "hold_years": 5,
+            "exit_yield": 0.0525,
+            "rental_growth": 0.045,
+            "ltv": 0.6,
+            "scenario": 1
+          },
+          "vs_previous": {
+            "entry_yield": {
+              "from": 0.0725,
+              "to": null
+            }
+          },
+          "vs_baseline": {
+            "exit_yield": {
+              "from": 0.0625,
+              "to": 0.0525
+            },
+            "entry_date": {
+              "from": "2026-06-01",
+              "to": "2026-06-30"
+            },
+            "ltv": {
+              "from": 0,
+              "to": 0.6
+            }
+          },
+          "flag_resolutions": [],
+          "gap_overrides": {
+            "Assumed Void (mths)": 3,
+            "Re-letting Capex (psf)": 10
+          },
+          "returns": {
+            "unlevered_irr": 0.178395031835595,
+            "net_investor_irr": 0.189010136598322,
+            "levered_irr": 0.22335427348933,
+            "equity_multiple": 2.5823087442675,
+            "cash_on_cash": 0.061507041173275,
+            "net_exit_price": 46.785061158377,
+            "net_purchase_price": 24130876.2753455,
+            "cfo": {
+              "scenario_label": null,
+              "unlevered": {
+                "irr": 0.178395031835595,
+                "em": 2.13450154183201,
+                "coc_y5": 0.061507041173275,
+                "profit": 29.1598248752525,
+                "equity": 25.8347943070467
+              },
+              "levered": {
+                "irr": 0.22335427348933,
+                "em": 2.5823087442675,
+                "coc_y5": 0.068014789866978,
+                "profit": 18.1587475227696,
+                "equity": 11.2242377834124
+              },
+              "assumptions_table": {
+                "net_purchase_price": 24130876.2753455
+              },
+              "source": {
+                "sheet": "Cash Flow Output",
+                "unlevered_col": "L",
+                "levered_col": "J",
+                "resolved_by": "label",
+                "row_map": {
+                  "equity": 16,
+                  "unlev_irr": 17,
+                  "lev_irr": 18,
+                  "em": 19,
+                  "coc": 20,
+                  "profit": 21
+                }
+              }
+            }
+          },
+          "checks": {
+            "pass": true,
+            "anchor_tieout_ok": true,
+            "workbook_error_cells": 0
+          },
+          "assumption_notes": [
+            "gap override: filled 20 blank Assumed Void (mths) cell(s) with 3mths",
+            "gap override: filled 20 blank Re-letting Capex (psf) cell(s) with 10\u00a3 psf"
+          ],
+          "note": "Task 8 gap-override proof",
+          "model_xlsx": "C:\\Screening Framework\\extractor\\underwrite_runs\\bef9beb3fedf43e5\\run_20260611T120821Z\\model.xlsx",
+          "passed": true
         }
       ],
       "returns": {
-        "unlevered_irr": 0.186982332823991,
-        "net_investor_irr": 0.199900614481681,
-        "levered_irr": 0.236031548055975,
-        "equity_multiple": 2.65641835245531,
-        "cash_on_cash": 0.0706778407555396,
-        "net_exit_price": 46.5607328382944,
-        "net_purchase_price": 24130876.2753455
+        "unlevered_irr": 0.178395031835595,
+        "net_investor_irr": 0.189010136598322,
+        "levered_irr": 0.22335427348933,
+        "equity_multiple": 2.5823087442675,
+        "cash_on_cash": 0.061507041173275,
+        "net_exit_price": 46.785061158377,
+        "net_purchase_price": 24130876.2753455,
+        "cfo": {
+          "scenario_label": null,
+          "unlevered": {
+            "irr": 0.178395031835595,
+            "em": 2.13450154183201,
+            "coc_y5": 0.061507041173275,
+            "profit": 29.1598248752525,
+            "equity": 25.8347943070467
+          },
+          "levered": {
+            "irr": 0.22335427348933,
+            "em": 2.5823087442675,
+            "coc_y5": 0.068014789866978,
+            "profit": 18.1587475227696,
+            "equity": 11.2242377834124
+          },
+          "assumptions_table": {
+            "net_purchase_price": 24130876.2753455
+          },
+          "source": {
+            "sheet": "Cash Flow Output",
+            "unlevered_col": "L",
+            "levered_col": "J",
+            "resolved_by": "label",
+            "row_map": {
+              "equity": 16,
+              "unlev_irr": 17,
+              "lev_irr": 18,
+              "em": 19,
+              "coc": 20,
+              "profit": 21
+            }
+          }
+        }
       },
       "checks": {
         "pass": true,
@@ -658,21 +855,21 @@
         "workbook_error_cells": 0
       },
       "display_returns": true,
-      "updated_at": "2026-06-11T00:02:43.400902Z",
+      "updated_at": "2026-06-11T12:09:09.290940Z",
       "assumptions": {
         "entry_date": "2026-06-30",
         "hold_years": 5,
-        "entry_yield": 0.0725,
         "exit_yield": 0.0525,
         "rental_growth": 0.045,
         "ltv": 0.6,
         "scenario": 1
       },
       "assumption_notes": [
-        "entry_yield=0.0725 applied uniformly to 28 unit(s) (RR col H, pre-injection)"
+        "gap override: filled 20 blank Assumed Void (mths) cell(s) with 3mths",
+        "gap override: filled 20 blank Re-letting Capex (psf) cell(s) with 10\u00a3 psf"
       ],
-      "model_xlsx": "C:\\Screening Framework\\extractor\\underwrite_runs\\bef9beb3fedf43e5\\run_20260611T000105Z\\model.xlsx",
-      "latest_version": 2
+      "model_xlsx": "C:\\Screening Framework\\extractor\\underwrite_runs\\bef9beb3fedf43e5\\run_20260611T120821Z\\model.xlsx",
+      "latest_version": 3
     }
   },
   {
