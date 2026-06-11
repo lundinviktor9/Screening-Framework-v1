@@ -20,7 +20,7 @@ ENV MAPBOX_TOKEN=$MAPBOX_TOKEN \
     API_BASE=$API_BASE
 
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 COPY . .
 RUN npm run build      # -> /app/dist (bundle.<hash>.js + index.html)
 
