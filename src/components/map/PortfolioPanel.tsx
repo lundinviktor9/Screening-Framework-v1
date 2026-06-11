@@ -1,5 +1,6 @@
 import type { ScoredMarket } from '../../types';
 import type { PortfolioAsset } from '../../store/marketStore';
+import { confirmDialog } from '@/components/ui/confirm';
 
 interface Props {
   assets: PortfolioAsset[];
@@ -82,7 +83,7 @@ export default function PortfolioPanel({ assets, markets, onDelete, onClose }: P
                     )}
                   </div>
                   <button
-                    onClick={() => { if (confirm(`Remove ${asset.name}?`)) onDelete(asset.id); }}
+                    onClick={async () => { if (await confirmDialog({ title: `Remove ${asset.name}?`, confirmText: 'Remove', destructive: true })) onDelete(asset.id); }}
                     className="text-[10px] text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     ✕

@@ -2,6 +2,8 @@ import { type DealRecord, useDealStore } from '../../store/useDealStore';
 import { useMarketStore } from '../../store/marketStore';
 import { UK_MARKETS } from '../../data/ukMarkets';
 import { UnderwritingPanel } from './UnderwritingPanel';
+import { toast } from '@/components/ui/sonner';
+import { confirmDialog } from '@/components/ui/confirm';
 
 interface DealProfileDrawerProps {
   deal: DealRecord;
@@ -37,13 +39,18 @@ export function DealProfileDrawer({ deal, onClose }: DealProfileDrawerProps) {
   const matchedMarkets = markets.filter(m => deal.market_ids.includes(m.id));
 
   async function handleDelete() {
-    if (confirm('Delete this deal?')) {
-      try {
-        await deleteDeal(deal.deal_id);
-        onClose();
-      } catch (err) {
-        alert('Delete failed');
-      }
+    const ok = await confirmDialog({
+      title: 'Delete this deal?',
+      description: 'This removes the deal and its extracted data. This cannot be undone.',
+      confirmText: 'Delete',
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await deleteDeal(deal.deal_id);
+      onClose();
+    } catch {
+      toast.error('Delete failed');
     }
   }
 

@@ -5,6 +5,8 @@ import { validateMetricValue, deriveStatusForEntry } from '../../utils/validatio
 import { formatCompact } from '../../utils/formatting';
 import { METRIC_VALIDATION } from '../../config/metricValidation';
 import StatusBadge from './StatusBadge';
+import { toast } from '@/components/ui/sonner';
+import { confirmDialog } from '@/components/ui/confirm';
 
 function scoreColour(score: number) {
   if (score >= 4) return 'text-green-600';
@@ -67,21 +69,20 @@ export default function MetricEntryRow({
     setExpanded(!expanded);
   }
 
-  function handleSaveClick() {
+  async function handleSaveClick() {
     const numVal = editValue === '' ? null : parseFloat(editValue);
     const finalValue = numVal !== null && isNaN(numVal) ? null : numVal;
 
     // Block save if value is out of range and user hasn't overridden with a justification
     const valResult = validateMetricValue(metric.id, finalValue);
     if (!valResult.valid && !overrideValidation) {
-      alert(
-        `${valResult.message}\n\nClick "Override" to save anyway with a justification note, ` +
-        `or adjust the value.`,
-      );
+      toast.error(valResult.message, {
+        description: 'Click "Override" to save anyway with a justification note, or adjust the value.',
+      });
       return;
     }
     if (!valResult.valid && overrideValidation && overrideJustification.trim().length < 5) {
-      alert('Please enter a justification note (at least 5 characters) to override the validation warning.');
+      toast.error('Please enter a justification note (at least 5 characters) to override the validation warning.');
       return;
     }
 
@@ -90,9 +91,12 @@ export default function MetricEntryRow({
 
     if (geoLevel === 'regional') {
       const count = regionMarketCount;
-      if (!confirm(`This will apply the value to all ${count} markets in ${regionName}. Continue?`)) {
-        return;
-      }
+      const ok = await confirmDialog({
+        title: 'Apply to all markets in region?',
+        description: `This will apply the value to all ${count} markets in ${regionName}.`,
+        confirmText: 'Apply to region',
+      });
+      if (!ok) return;
       const { status: _s, geographicLevel: _g, confidence: _c, regionalSourceMarketId: _r,
               justificationNote: _jn, ...baseSrc } = editSource;
       onCascade(finalValue, baseSrc);

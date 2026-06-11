@@ -1,5 +1,6 @@
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { confirmDialog } from '@/components/ui/confirm';
 import { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Tooltip, Circle, GeoJSON, Marker, Polyline, useMapEvents, useMap } from 'react-leaflet';
 import type { ScoredMarket, Pillar } from '../../types';
@@ -573,7 +574,7 @@ export default function MarketMap({
                 <>
                   <br />
                   <button
-                    onClick={(e) => { e.stopPropagation(); if (confirm(`Remove ${asset.name}?`)) onDeletePortfolioAsset(asset.id); }}
+                    onClick={async (e) => { e.stopPropagation(); if (await confirmDialog({ title: `Remove ${asset.name}?`, confirmText: 'Remove', destructive: true })) onDeletePortfolioAsset(asset.id); }}
                     style={{ fontSize: 10, color: '#dc2626', marginTop: 4, cursor: 'pointer', background: 'none', border: 'none', textDecoration: 'underline' }}
                   >
                     Remove asset

@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { useDealStore } from '../../store/useDealStore';
+import { toast } from '@/components/ui/sonner';
 
 export function DealUploadPanel() {
   const [dragging, setDragging] = useState(false);
@@ -45,7 +46,7 @@ export function DealUploadPanel() {
       await fetchDeals();
     } catch (err) {
       console.error('Upload error:', err);
-      alert('Upload failed: ' + (err instanceof Error ? err.message : 'Unknown error'));
+      toast.error('Upload failed: ' + (err instanceof Error ? err.message : 'Unknown error'));
     } finally {
       setUploading(false);
       setProgress({});
@@ -145,7 +146,7 @@ export function DealUploadPanel() {
                 });
                 fetchDeals();
               })
-              .catch(err => alert('Batch ingest failed: ' + err.message));
+              .catch(err => toast.error('Batch ingest failed: ' + err.message));
           }}
           className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-sm"
         >

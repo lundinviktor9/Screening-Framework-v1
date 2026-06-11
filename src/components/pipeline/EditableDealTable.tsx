@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { type DealRecord, useDealStore } from '../../store/useDealStore';
 import { UK_MARKETS } from '../../data/ukMarkets';
+import { toast } from '@/components/ui/sonner';
+import { confirmDialog } from '@/components/ui/confirm';
 
 interface EditableDeals {
   [dealId: string]: Partial<DealRecord>;
@@ -78,14 +80,19 @@ export function EditableDealTable({ deals, onOpenDeal }: { deals: DealRecord[]; 
     }
     setEditedDeals({});
     setHasChanges(false);
-    alert('Changes saved!');
+    toast.success('Changes saved');
   };
 
   const handleDelete = async (dealId: string) => {
-    if (confirm('Delete this deal?')) {
-      await deleteDeal(dealId);
-      setLocalDeals(prev => prev.filter(d => d.deal_id !== dealId));
-    }
+    const ok = await confirmDialog({
+      title: 'Delete this deal?',
+      description: 'This removes the deal and its extracted data. This cannot be undone.',
+      confirmText: 'Delete',
+      destructive: true,
+    });
+    if (!ok) return;
+    await deleteDeal(dealId);
+    setLocalDeals(prev => prev.filter(d => d.deal_id !== dealId));
   };
 
   const getCellValue = (deal: DealRecord, field: string): any => {

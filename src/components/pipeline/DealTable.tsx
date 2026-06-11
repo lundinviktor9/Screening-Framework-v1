@@ -1,5 +1,7 @@
 import { useDealStore, type DealRecord } from '../../store/useDealStore';
 import { UK_MARKETS } from '../../data/ukMarkets';
+import { toast } from '@/components/ui/sonner';
+import { confirmDialog } from '@/components/ui/confirm';
 
 interface DealTableProps {
   deals: DealRecord[];
@@ -49,12 +51,17 @@ export function DealTable({ deals, selectedDeal, onSelectDeal }: DealTableProps)
   const deleteDeal = useDealStore(s => s.deleteDeal);
 
   async function handleDelete(dealId: string) {
-    if (confirm('Delete this deal?')) {
-      try {
-        await deleteDeal(dealId);
-      } catch (err) {
-        alert('Delete failed: ' + (err instanceof Error ? err.message : 'Unknown error'));
-      }
+    const ok = await confirmDialog({
+      title: 'Delete this deal?',
+      description: 'This removes the deal and its extracted data. This cannot be undone.',
+      confirmText: 'Delete',
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await deleteDeal(dealId);
+    } catch (err) {
+      toast.error('Delete failed: ' + (err instanceof Error ? err.message : 'Unknown error'));
     }
   }
 

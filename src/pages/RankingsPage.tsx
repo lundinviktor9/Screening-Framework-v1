@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMarketStore } from '../store/marketStore';
+import { confirmDialog } from '@/components/ui/confirm';
 import { exportToCSV, parseImportedCSV } from '../utils/csvImportExport';
 import RankingsTable from '../components/rankings/RankingsTable';
 import type { ScoredMarket, PipelineStatus } from '../types';
@@ -109,15 +110,23 @@ export default function RankingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
-  function handleDelete(id: string) {
-    if (confirm('Delete this market?')) {
-      deleteMarketAction(id);
-    }
+  async function handleDelete(id: string) {
+    const ok = await confirmDialog({
+      title: 'Delete this market?',
+      description: 'This removes the market from your dataset.',
+      confirmText: 'Delete',
+      destructive: true,
+    });
+    if (ok) deleteMarketAction(id);
   }
-  function handleReset() {
-    if (confirm('Reset all markets to the default UK pre-filled dataset? Any manual edits will be lost.')) {
-      resetToDefaultsAction();
-    }
+  async function handleReset() {
+    const ok = await confirmDialog({
+      title: 'Reset all markets to defaults?',
+      description: 'Resets to the default UK pre-filled dataset. Any manual edits will be lost.',
+      confirmText: 'Reset',
+      destructive: true,
+    });
+    if (ok) resetToDefaultsAction();
   }
   function handleExport() { exportToCSV(markets); }
   function handleImportClick() { fileInputRef.current?.click(); }

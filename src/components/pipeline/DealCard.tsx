@@ -1,5 +1,6 @@
 import { type DealRecord } from '../../store/useDealStore';
 import { UK_MARKETS } from '../../data/ukMarkets';
+import { confirmDialog } from '@/components/ui/confirm';
 
 interface DealCardProps {
   deal: DealRecord;
@@ -194,11 +195,15 @@ export function DealCard({ deal, isSelected, onSelect, onDelete }: DealCardProps
           View Profile
         </button>
         <button
-          onClick={e => {
+          onClick={async e => {
             e.stopPropagation();
-            if (confirm('Delete this deal?')) {
-              onDelete(deal.deal_id);
-            }
+            const ok = await confirmDialog({
+              title: 'Delete this deal?',
+              description: 'This removes the deal and its extracted data. This cannot be undone.',
+              confirmText: 'Delete',
+              destructive: true,
+            });
+            if (ok) onDelete(deal.deal_id);
           }}
           className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded border border-red-200 transition-colors"
         >

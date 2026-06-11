@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { toast } from '@/components/ui/sonner';
 
 interface GiltCache {
   yield_pct: number | null;
@@ -84,7 +85,10 @@ export default function LiveGiltYieldCard() {
       </div>
       <button
         onClick={() => {
-          alert('Run from a terminal:\n\n  python scrapers/gilt_yield_fetcher.py\n\nThen copy scrapers/config/gilt_yield_cache.json to public/data/ (or re-run the build).');
+          toast('Refresh the gilt yield from a terminal', {
+            description: 'Run: python scrapers/gilt_yield_fetcher.py — then copy scrapers/config/gilt_yield_cache.json to public/data/ (or re-run the build).',
+            duration: 10000,
+          });
         }}
         className="mt-2 text-[10px] font-semibold px-2 py-1 rounded border bg-white hover:bg-gray-50"
         style={{ borderColor: border, color: textColour }}

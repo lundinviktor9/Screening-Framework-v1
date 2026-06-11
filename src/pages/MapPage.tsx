@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useMarketStore } from '../store/marketStore';
+import { toast } from '@/components/ui/sonner';
 import MarketMap from '../components/map/MarketMap';
 import type { MapOverlay, POIData, POIVisibility, NewmarkRegionData, MicroLocation } from '../components/map/MarketMap';
 import MarketProfilePanel from '../components/map/MarketProfilePanel';
@@ -614,7 +615,7 @@ function PendingAssetDialog({
         <div className="flex gap-2">
           <button
             onClick={() => {
-              if (!name.trim()) { alert('Asset name is required'); return; }
+              if (!name.trim()) { toast.error('Asset name is required'); return; }
               onConfirm(name.trim(), assetType, size ? Number(size) : undefined);
             }}
             className="flex-1 py-2 rounded-lg text-sm font-semibold text-white"
