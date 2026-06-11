@@ -109,10 +109,9 @@ function EditTextCell({
 
 interface Props {
   deals: DealRecord[];
-  onUnderwrite?: (deal: DealRecord) => void;
 }
 
-export function DealDataTable({ deals, onUnderwrite }: Props) {
+export function DealDataTable({ deals }: Props) {
   const navigate = useNavigate();
   const updateDeal = useDealStore((s) => s.updateDeal);
   const deleteDeal = useDealStore((s) => s.deleteDeal);
@@ -354,11 +353,14 @@ export function DealDataTable({ deals, onUnderwrite }: Props) {
           const d = row.original;
           return (
             <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-              {onUnderwrite && (
-                <Button size="icon" variant="ghost" title="Underwrite" onClick={() => onUnderwrite(d)}>
-                  <Calculator className="text-muted-foreground" />
-                </Button>
-              )}
+              <Button
+                size="icon"
+                variant="ghost"
+                title="Underwrite"
+                onClick={() => navigate(`/underwrite?deal=${d.deal_id}`)}
+              >
+                <Calculator className="text-muted-foreground" />
+              </Button>
               <Button size="icon" variant="ghost" title="Delete" onClick={() => handleDelete(d)}>
                 <Trash2 className="text-danger" />
               </Button>
@@ -368,7 +370,7 @@ export function DealDataTable({ deals, onUnderwrite }: Props) {
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [onUnderwrite]
+    []
   );
 
   const table = useReactTable({

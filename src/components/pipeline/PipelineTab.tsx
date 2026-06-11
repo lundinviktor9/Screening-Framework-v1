@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Inbox } from 'lucide-react';
 
-import { useDealStore, type DealRecord } from '../../store/useDealStore';
+import { useDealStore } from '../../store/useDealStore';
 import { DealUploadPanel } from './DealUploadPanel';
 import { DealDataTable } from './DealDataTable';
 import { DealMap } from './DealMap';
-import { DealProfileDrawer } from './DealProfileDrawer';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -14,7 +13,6 @@ export function PipelineTab() {
   const filters = useDealStore((s) => s.filters);
   const loading = useDealStore((s) => s.loading);
   const fetchDeals = useDealStore((s) => s.fetchDeals);
-  const [underwriteDeal, setUnderwriteDeal] = useState<DealRecord | null>(null);
 
   const deals = useMemo(
     () => useDealStore.getState().getFilteredDeals(),
@@ -56,13 +54,13 @@ export function PipelineTab() {
           ) : deals.length === 0 ? (
             <EmptyState />
           ) : (
-            <DealDataTable deals={deals} onUnderwrite={setUnderwriteDeal} />
+            <DealDataTable deals={deals} />
           )}
         </Card>
 
         <Card className="min-h-[320px] overflow-hidden lg:min-h-0">
           {deals.length > 0 ? (
-            <DealMap deals={deals} selectedDeal={underwriteDeal} />
+            <DealMap deals={deals} selectedDeal={null} />
           ) : (
             <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted-foreground">
               Deals with a matched market appear here.
@@ -70,11 +68,6 @@ export function PipelineTab() {
           )}
         </Card>
       </div>
-
-      {/* Underwrite drawer (kept until Phase 2.2 Underwrite redesign) */}
-      {underwriteDeal && (
-        <DealProfileDrawer deal={underwriteDeal} onClose={() => setUnderwriteDeal(null)} />
-      )}
     </div>
   );
 }
